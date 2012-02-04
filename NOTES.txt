@@ -1,0 +1,76 @@
+
+
+Commands
+-----------
+
+Data query and manipulation:
+
+ * list [--dir]
+   Lists all card (or decks, with --dir option) 
+
+ * name [--stdin] [FILE]
+   Prints a suggested name of given card file.
+
+ * add [-d DIR] [--stdin] [FILE ...]
+   Adds given card to the specified directory.
+
+ * find NAME
+   Prints the path of the card of given name. Fails otherwise.
+
+ * pass NAME
+   Marks the card to pass.
+
+ * fail NAME
+   Marks the card to fail.
+
+ * coming [N]
+   Prints list of card names which is ready to challenge.
+  
+Interactive:
+
+ * challenge
+   Start a challenge session.
+
+(Later)
+
+ * cleanup [FILE]
+   Removes unused and old entries from the journal.
+
+ * notrans [-d DIR]
+   Lists all names of cards which don't have any translations.
+
+ * report [--stdout]
+   Summarizes the daily activity and writes it to the report file.
+
+Runtime Options
+------------------
+
+ * --config FILE
+
+Configuration parameters
+--------------------------
+
+ * repo
+   Where your stuff is saved.
+   * default: ~/ankit.d/
+
+ * location
+   * default hostname
+
+ * journal
+   The journal file path.
+   * default: <repo>/<hostname>.journal
+
+ * card_paths
+   The list of paths to search the card.
+   Note that the each subdirectory is also searched
+   * default: <repo>/cards
+
+Plan
+------------------
+
+Start from an as naive implentation as possible...
+
+ + impl runtime to handle configs
+ + impl command infrastructure
+ + impl list command
