@@ -1,7 +1,10 @@
 
 require 'ankit/command'
 require 'ankit/runtime'
+
 require 'test/unit'
+require 'fileutils'
+require 'tmpdir'
 
 class CommandTest < Test::Unit::TestCase
   include Ankit
@@ -85,5 +88,48 @@ class ScoreTest < Test::Unit::TestCase
     target = make_runtime
     target.dispatch(["score", repo_data_at("to_cards/foo/hello.card")])
     assert_equal(2, target.stdout.string.split("\n").map(&:strip).size)
+  end
+end
+
+class AddTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+  THE_TEXT = "O:There is no Frigate like a Book\n"
+  THE_NAME = "there-is-no-frigate-like-a-book.card"
+
+  def assert_written(runtime, paths)
+    lines = runtime.stdout.string.split("\n").map(&:strip)
+    assert_equal(paths.size, lines.size)
+    lines.zip(paths).each do |line, path|
+      assert_equal(path, line)
+      assert(File.file?(path))
+    end
+  end
+  
+  def test_hello_stdin
+    with_runtime_on_temp_repo do |target|
+      target.stdin.string << THE_TEXT
+      target.dispatch(["add", "--stdin"])
+      assert_written(target, [File.join(target.config.card_paths[0], THE_NAME)])
+    end
+  end
+
+  def test_hello_stdin_dir
+    with_runtime_on_temp_repo do |target|
+      target.stdin.string << THE_TEXT
+      dst_dir = target.config.card_search_paths[1]
+      target.dispatch(["add", "--stdin", "--dir", dst_dir])
+      assert_written(target, [File.join(dst_dir, THE_NAME)])
+    end
+  end
+
+  def test_hello_two_file
+    with_runtime_on_temp_repo do |target|
+      dst_dir = target.config.card_search_paths[1]
+      target.dispatch(["add", test_data_at("hope.card"), test_data_at("luck.card")])
+      assert_written(target, [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
+                              File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
+    end
   end
 end

@@ -86,5 +86,5 @@ Start from an as naive implentation as possible...
  + impl list command
  + impl hello command
  + impl name command
-
+ + impl score command
  - add command
