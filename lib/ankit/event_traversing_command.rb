@@ -1,5 +1,6 @@
 
 require 'ankit/command'
+require 'ankit/card'
 
 module Ankit
   class EventTraversingCommand < Command
@@ -14,4 +15,18 @@ module Ankit
       end
     end
   end
+
+  # For Command Mixin
+  module EventTraversing
+    class << self
+      include CardNaming
+    end
+
+    def self.find_latest_event_for(runtime, path)
+      EventTraversingCommand.new(runtime).to_enum(:each_event, to_card_name(path)).sort_by { |x| x.round }[-1]
+    end
+
+    def latest_event_for(path) EventTraversing.find_latest_event_for(self.runtime, path); end
+  end
+
 end

@@ -1,5 +1,4 @@
 
-require 'ankit/command'
 require 'ankit/runtime'
 
 require 'test/unit'
@@ -23,17 +22,13 @@ class ListTest <  Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    target = make_runtime
-    target.dispatch(["hello"])
-    lines = target.stdout.string.split("\n").map(&:strip)
+    lines = make_runtime.dispatch_then(["hello"]).printed_lines
     a_subpath = File.join(HELLO_REPO, "cards", "foo")
     assert(lines.include?("card_search_paths: #{a_subpath}"))
   end
 
   def test_list
-    target = make_runtime
-    target.dispatch(["list"])
-    lines = target.stdout.string.split
+    lines = make_runtime.dispatch_then(["list"]).printed_lines
     assert( lines.include?(File.join(HELLO_REPO, "cards", "foo", "hello.card")))
     assert(!lines.include?(File.join(HELLO_REPO, "cards", "foo")))
     not_a_card = File.join(HELLO_REPO, "cards", "foo", "this_is_not_a_card.txt")
@@ -47,9 +42,7 @@ class FindTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    target = make_runtime
-    target.dispatch(["find", "vanilla-please", "hello", "no-such-card"])
-    assert_equal(target.stdout.string.split, 
+    assert_equal(make_runtime.dispatch_then(["find", "vanilla-please", "hello", "no-such-card"]).printed_lines, 
                  [repo_data_at("cards/foo/vanilla-please.card"),
                   repo_data_at("cards/foo/hello.card")])
   end
@@ -74,14 +67,13 @@ class NameTest <  Test::Unit::TestCase
   def test_stdin
     target = make_runtime
     target.stdin.string << "O: Hello!\n\n"
-    target.dispatch(["name", "--stdin"])
-    assert_equal(target.stdout.string.strip, "hello")
+    assert_equal(target.dispatch_then(["name", "--stdin"]).printed_line, "hello")
   end
 
   def test_hello
     target = make_runtime
     target.dispatch(["name", test_data_at("hello_card.card"), test_data_at("bye_card.card")])
-    assert_equal(target.stdout.string.split.map(&:strip), ["hello-world", "bye-universe"])
+    assert_equal(target.printed_lines, ["hello-world", "bye-universe"])
   end
 end
 
@@ -100,7 +92,17 @@ class ScoreTest < Test::Unit::TestCase
   def test_hello
     target = make_runtime
     target.dispatch(["score", repo_data_at("to_cards/foo/hello.card")])
-    assert_equal(2, target.stdout.string.split("\n").map(&:strip).size)
+    assert_equal(2, target.printed_lines.size)
+  end
+end
+
+
+class RoundTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+  def test_hello
+    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "2")
   end
 end
 
@@ -112,9 +114,8 @@ class AddTest < Test::Unit::TestCase
   THE_NAME = "there-is-no-frigate-like-a-book.card"
 
   def assert_written(runtime, paths)
-    lines = runtime.stdout.string.split("\n").map(&:strip)
-    assert_equal(paths.size, lines.size)
-    lines.zip(paths).each do |line, path|
+    assert_equal(paths.size, runtime.printed_lines.size)
+    runtime.printed_lines.zip(paths).each do |line, path|
       assert_equal(path, line)
       assert(File.file?(path))
     end
@@ -123,8 +124,8 @@ class AddTest < Test::Unit::TestCase
   def test_hello_stdin
     with_runtime_on_temp_repo do |target|
       target.stdin.string << THE_TEXT
-      target.dispatch(["add", "--stdin"])
-      assert_written(target, [File.join(target.config.card_paths[0], THE_NAME)])
+      assert_written(target.dispatch_then(["add", "--stdin"]),
+                     [File.join(target.config.card_paths[0], THE_NAME)])
     end
   end
 
@@ -132,17 +133,17 @@ class AddTest < Test::Unit::TestCase
     with_runtime_on_temp_repo do |target|
       target.stdin.string << THE_TEXT
       dst_dir = target.config.card_search_paths[1]
-      target.dispatch(["add", "--stdin", "--dir", dst_dir])
-      assert_written(target, [File.join(dst_dir, THE_NAME)])
+      assert_written(target.dispatch_then(["add", "--stdin", "--dir", dst_dir]),
+                     [File.join(dst_dir, THE_NAME)])
     end
   end
 
   def test_hello_two_file
     with_runtime_on_temp_repo do |target|
       dst_dir = target.config.card_search_paths[1]
-      target.dispatch(["add", test_data_at("hope.card"), test_data_at("luck.card")])
-      assert_written(target, [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
-                              File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
+      assert_written(target.dispatch_then(["add", test_data_at("hope.card"), test_data_at("luck.card")]),
+                     [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
+                      File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
     end
   end
 end
@@ -154,25 +155,86 @@ class ComingTest < Test::Unit::TestCase
 
   def test_name
     with_runtime_on_temp_repo do |target|
-      target.dispatch(["coming", "--name"])
-      assert_equal(target.stdout.string.split, ["vanilla-please", "bye", "how-are-you", "hello"])
+      assert_equal(target.dispatch_then(["coming", "--name"]).printed_lines,
+                   ["vanilla-please", "bye", "how-are-you", "hello"])
     end
   end
 
   def test_limit
     with_runtime_on_temp_repo do |target|
-      target.dispatch(["coming", "--name", "1"])
-      assert_equal(target.stdout.string.split, ["vanilla-please"])
+      
+      assert_equal(target.dispatch_then(["coming", "--name", "1"]).printed_lines,
+                   ["vanilla-please"])
     end
   end
 
   def test_hello
     with_runtime_on_temp_repo do |target|
       dir = File.join(target.config.repo, "cards/foo")
-      target.dispatch(["coming"])
-      assert_equal(target.stdout.string.split, 
+      assert_equal(target.dispatch_then(["coming"]).printed_lines, 
                    [to_card_path(dir, "vanilla-please"),
                     to_card_path(dir, "hello")])
     end
   end
 end
+
+class FailPassTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+  include Ankit::CardNaming, Ankit::Coming
+
+  VANILLA = "vanilla-please"
+  JUNIOR  = "bye"
+  MIDDLE  = "how-are-you"
+  VINTAGE = "hello"
+
+  def path_for(runtime, name)
+    dir = File.join(runtime.config.repo, "cards/foo")
+    to_card_path(dir, name)
+  end
+
+  def run_test_against(command, card, &block)
+    with_runtime_on_temp_repo do |target|
+      path = path_for(target, card)
+      target.dispatch([command, path])
+      assert_equal(target.printed_lines.size, 1)
+      events = Coming.list(target)
+      block.call(events)
+    end
+  end
+
+  def test_pass_vanilla
+    run_test_against("pass", VANILLA) do |events|
+      assert_equal(events[0].name, VANILLA)
+      assert_equal(events[0].maturity, 1)
+    end
+  end
+
+  def test_pass_vintage
+    run_test_against("pass", VINTAGE) do |events|
+      assert_equal(events.map(&:name), [VANILLA, JUNIOR, MIDDLE, VINTAGE])
+    end
+  end
+
+  def test_pass_junior
+    run_test_against("pass", JUNIOR) do |events|
+      assert_equal(events.map(&:name), [VANILLA, MIDDLE, JUNIOR, VINTAGE])
+      assert_equal(events[2].maturity, 3)
+    end
+  end
+
+  def test_fail_vanilla
+    run_test_against("fail", VANILLA) do |events|
+      assert_equal(events[0].name, VANILLA)
+      assert_equal(events[0].maturity, 0)
+    end
+  end
+
+  def test_fail_vintage
+    run_test_against("fail", VINTAGE) do |events|
+      assert_equal(events.map(&:name), [VINTAGE, VANILLA, JUNIOR, MIDDLE])
+      assert_equal(events[0].maturity, 0)
+    end
+  end
+end
+

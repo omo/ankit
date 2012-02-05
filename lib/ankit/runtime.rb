@@ -3,12 +3,15 @@ require 'optparse'
 require 'fileutils'
 require 'ankit/command'
 require 'ankit/add_command'
+require 'ankit/coming_command'
+require 'ankit/fail_command'
 require 'ankit/find_command'
 require 'ankit/hello_command'
 require 'ankit/list_command'
 require 'ankit/name_command'
+require 'ankit/pass_command'
+require 'ankit/round_command'
 require 'ankit/score_command'
-require 'ankit/coming_command'
 
 module Ankit
 
@@ -48,19 +51,12 @@ module Ankit
       config
     end
 
-    def self.touch(path)
-      File.open(path, "w") { |f| f.write("") } unless File.file?(path)
-    end
-
     def self.prepare_default
-      touch(DEFAULT_PATH) # TODO: Give same example settings.
+      FileUtils.touch([DEFAULT_PATH]) # TODO: Give same example settings.
       plain = Config.open(DEFAULT_PATH)
       (plain.card_paths + [plain.repo]).each { |p| FileUtils.mkdir_p(p) }
-      touch(plain.primary_journal)
+      FileUtils.touch([plain.primary_journal])
       STDOUT.print("Prepared the default setting. You can edit #{DEFAULT_PATH}\n")
-    end
-
-    def make_ready(options)
     end
   end
 
@@ -118,6 +114,12 @@ module Ankit
       command = Command.by_name[name].new(self, args)
       command.execute()
       command
+    end
+
+    # To encourage one-liner
+    def dispatch_then(args)
+      dispatch(args)
+      self
     end
   end
 end

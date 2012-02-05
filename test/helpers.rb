@@ -13,6 +13,9 @@ module Ankit
       ["stdin=", "stdout=", "stderr="].each { |m| self.send(m, StringIO.new) }
     end
 
+    def printed_line; self.stdout.string.strip; end
+    def printed_lines; self.stdout.string.split("\n").map(&:strip); end
+
     def self.prepare_default; end
   end
 

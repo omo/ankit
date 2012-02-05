@@ -6,19 +6,22 @@ Commands
 Data query and manipulation:
 
  * list
-   Lists all card paths.
-
- * find FILE ...
-   Find paths for given card names
+   Lists all card filenames.
 
  * name [--stdin] [FILE ...]
    Prints a suggested name of given card file.
+
+ * find FILE ...
+   Find filenames for given card names
 
  * score FILE
    Shows list of journal entries associated to the file.
 
  * add [-d DIR] [--stdin] [FILE ...]
    Adds given card to the specified directory.
+
+ * round
+   Prints current round
 
  * coming [--name] [N]
    Prints list of card filenames which is ready to challenge.
@@ -44,7 +47,7 @@ Interactive:
    Removes unused and old entries from the journal.
 
  * notrans [-d DIR]
-   Lists all names of cards which don't have any translations.
+   Lists all paths of cards which don't have any translations.
 
  * report [--stdout]
    Summarizes the daily activity and writes it to the report file.
@@ -92,3 +95,7 @@ Start from an as naive implentation as possible...
  + impl name command
  + impl score command
  + add command
+ + find command
+ + coming command
+ + pass command
+ + fail command
