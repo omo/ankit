@@ -19,6 +19,14 @@ class ListTest <  Test::Unit::TestCase
   include Ankit
   include Ankit::TestHelper
 
+  def test_hello
+    target = make_runtime
+    target.dispatch(["hello"])
+    lines = target.stdout.string.split("\n").map(&:strip)
+    a_subpath = File.join(HELLO_REPO, "cards", "foo")
+    assert(lines.include?("card_search_paths: #{a_subpath}"))
+  end
+
   def test_list
     target = make_runtime
     target.dispatch(["list"])
@@ -28,13 +36,5 @@ class ListTest <  Test::Unit::TestCase
     not_a_card = File.join(HELLO_REPO, "cards", "foo", "this_is_not_a_card.txt")
     assert( File.file?(not_a_card))
     assert(!lines.include?(not_a_card))
-  end
-
-  def test_list_dir
-    target = make_runtime
-    target.dispatch(["list", "--dir"])
-    lines = target.stdout.string.split
-    assert_equal(3, lines.size)
-    assert(lines.include?(File.join(HELLO_REPO, "cards", "foo")))
   end
 end

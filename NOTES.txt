@@ -5,17 +5,14 @@ Commands
 
 Data query and manipulation:
 
- * list [--dir]
-   Lists all card (or decks, with --dir option) 
+ * list
+   Lists all card paths.
 
  * name [--stdin] [FILE]
    Prints a suggested name of given card file.
 
  * add [-d DIR] [--stdin] [FILE ...]
    Adds given card to the specified directory.
-
- * find NAME
-   Prints the path of the card of given name. Fails otherwise.
 
  * pass NAME
    Marks the card to pass.
@@ -25,7 +22,10 @@ Data query and manipulation:
 
  * coming [N]
    Prints list of card names which is ready to challenge.
-  
+
+ * hello
+   Shows your configuration
+
 Interactive:
 
  * challenge
@@ -41,6 +41,9 @@ Interactive:
 
  * report [--stdout]
    Summarizes the daily activity and writes it to the report file.
+
+ * find KEYWORD
+   Prints the path of the cards which matches the keyword.
 
 Runtime Options
 ------------------
@@ -74,3 +77,5 @@ Start from an as naive implentation as possible...
  + impl runtime to handle configs
  + impl command infrastructure
  + impl list command
+ + impl hello command
+ - impl name command

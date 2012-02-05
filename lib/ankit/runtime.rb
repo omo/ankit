@@ -2,6 +2,7 @@
 require 'optparse'
 require 'fileutils'
 require 'ankit/command'
+require 'ankit/hello_command'
 require 'ankit/list_command'
 
 module Ankit
@@ -76,7 +77,11 @@ module Ankit
     def self.run(args)
       splitted = self.split_subcommand(args)
       r = self.setup(splitted[:global])
-      r.dispatch(splitted[:subcommand]) unless splitted[:subcommand].empty?
+      if splitted[:subcommand].empty?
+        # TODO: show help
+      else
+        r.dispatch(splitted[:subcommand])
+      end
     end
     
     def initialize(config)
