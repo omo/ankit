@@ -4,7 +4,7 @@ module Ankit
   class Card
     attr_reader :deckname, :source
 
-    def self.parse(text, deckname=nil)
+    def self.parse(text)
       lines = text.split(/\r?\n/).select { |l| !/^\#/.match(l) and !/^\s*$/.match(l) }
       return nil if lines.empty?
 
@@ -16,16 +16,15 @@ module Ankit
         a
       end
 
-      self.new(deckname, params, text)
+      self.new(params)
     end
 
-    def initialize(deckname, params, source)
-      @deckname, @params, @source = deckname, params, source
+    def initialize(params)
+      @params = params
     end
 
     def original() @params[:o]; end
     def translation() @params[:t]; end
-    def fullname() Datastore.fullname(deckname, name); end
     
     def name
       original.gsub(/\W+/, "-").gsub(/^\-/, "").gsub(/\-$/, "").downcase

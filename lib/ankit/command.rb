@@ -31,6 +31,8 @@ module Ankit
     end
   end
 
+  class BadOptions < StandardError; end
+
   class HelloCommand < Command
     available
     def execute; end

@@ -4,6 +4,7 @@ require 'fileutils'
 require 'ankit/command'
 require 'ankit/hello_command'
 require 'ankit/list_command'
+require 'ankit/name_command'
 
 module Ankit
 
@@ -44,8 +45,8 @@ module Ankit
     attr_reader :config
 
     def stdin; @stdin ||= STDIN; end
-    def stdout; @stdin ||= STDOUT; end
-    def stderr; @stdin ||= STDERR; end
+    def stdout; @stdout ||= STDOUT; end
+    def stderr; @stderr ||= STDERR; end
 
     def self.split_subcommand(args)
       names = Command.by_name.keys

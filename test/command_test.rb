@@ -38,3 +38,33 @@ class ListTest <  Test::Unit::TestCase
     assert(!lines.include?(not_a_card))
   end
 end
+
+class NameTest <  Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+  def test_bad_options
+    assert_raise(BadOptions) do
+      target = make_runtime
+      target.dispatch(["name", "--stdin", "hello"])
+    end
+
+    assert_raise(BadOptions) do
+      target = make_runtime
+      target.dispatch(["name"])
+    end
+  end
+
+  def test_stdin
+    target = make_runtime
+    target.stdin.string << "O: Hello!\n\n"
+    target.dispatch(["name", "--stdin"])
+    assert_equal(target.stdout.string.strip, "hello")
+  end
+
+  def test_hello
+    target = make_runtime
+    target.dispatch(["name", File.join(TEST_DATA_BASE, "hello_card.card")])
+    assert_equal(target.stdout.string.strip, "hello-world")
+  end
+end
