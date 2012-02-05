@@ -8,6 +8,9 @@ Data query and manipulation:
  * list
    Lists all card paths.
 
+ * find FILE ...
+   Find paths for given card names
+
  * name [--stdin] [FILE ...]
    Prints a suggested name of given card file.
 
@@ -17,14 +20,15 @@ Data query and manipulation:
  * add [-d DIR] [--stdin] [FILE ...]
    Adds given card to the specified directory.
 
+ * coming [--name] [N]
+   Prints list of card filenames which is ready to challenge.
+   If --name is given, it prints the card names instead of their paths.
+
  * pass FILE
    Marks the card to pass.
 
  * fail FILE
    Marks the card to fail.
-
- * coming [N]
-   Prints list of card filenames which is ready to challenge.
 
  * hello
    Shows your configuration
@@ -87,4 +91,4 @@ Start from an as naive implentation as possible...
  + impl hello command
  + impl name command
  + impl score command
- - add command
+ + add command

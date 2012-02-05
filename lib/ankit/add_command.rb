@@ -1,8 +1,10 @@
 
+require 'ankit/card'
 require 'ankit/text_reading_command'
 
 module Ankit
   class AddCommand < TextReadingCommand
+    include CardNaming
     available
     define_options do |spec, options| 
       superclass.option_spec.call(spec, options) 
@@ -15,7 +17,7 @@ module Ankit
         card = Card.parse(text)
         # TODO: gaurd ovewrite
         # TODO: guard out-of-path write
-        filename = File.join(dest_dir, "#{card.name}.card")
+        filename = to_card_path(dest_dir, card.name)
         File.open(filename, "w") { |f| f.write(text) }
         runtime.stdout.write("#{filename}\n")
       end

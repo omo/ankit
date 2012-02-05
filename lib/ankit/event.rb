@@ -13,6 +13,7 @@ module Ankit
     end
 
     def self.parse(text) from_hash(JSON.parse(text)); end
+    def self.fresh; self.new(DateTime.new, 0); end
   end
 
   class Event
@@ -45,8 +46,8 @@ module Ankit
       Event.new(env, @values.merge({ "verb" => "failed", "maturity" => 0 }))
     end
 
-    def self.for_adding_card(env, name)
-      
+    def self.for_card(name, verb, env=Envelope.fresh)
+      self.new(env, { "type" => "card", "verb" => verb, "name" => name, "maturity" => 0 })
     end
 
     def self.from_hash(hash) Event.new(Envelope.from_hash(hash["envelope"]), hash["values"]); end

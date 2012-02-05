@@ -1,2 +1,2 @@
-{"envelope":{"at":"2001-02-03T04:05:06+00:00","round":2}, "values":{"type":"card","verb":"add","name":"hello","maturity":3}}
-{"envelope":{"at":"2001-02-03T04:05:06+00:00","round":1}, "values":{"type":"card","verb":"add","name":"how-are-you","maturity":2}}
+{"envelope":{"at":"2001-02-03T04:05:06+00:00","round":2}, "values":{"type":"card","verb":"add","name":"hello","maturity":4}}
+{"envelope":{"at":"2001-02-03T04:05:06+00:00","round":1}, "values":{"type":"card","verb":"add","name":"how-are-you","maturity":3}}

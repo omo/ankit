@@ -42,6 +42,19 @@ class ListTest <  Test::Unit::TestCase
   end
 end
 
+class FindTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+  def test_hello
+    target = make_runtime
+    target.dispatch(["find", "vanilla-please", "hello", "no-such-card"])
+    assert_equal(target.stdout.string.split, 
+                 [repo_data_at("cards/foo/vanilla-please.card"),
+                  repo_data_at("cards/foo/hello.card")])
+  end
+end
+
 class NameTest <  Test::Unit::TestCase
   include Ankit
   include Ankit::TestHelper
@@ -130,6 +143,36 @@ class AddTest < Test::Unit::TestCase
       target.dispatch(["add", test_data_at("hope.card"), test_data_at("luck.card")])
       assert_written(target, [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
                               File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
+    end
+  end
+end
+
+class ComingTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+  include Ankit::CardNaming
+
+  def test_name
+    with_runtime_on_temp_repo do |target|
+      target.dispatch(["coming", "--name"])
+      assert_equal(target.stdout.string.split, ["vanilla-please", "bye", "how-are-you", "hello"])
+    end
+  end
+
+  def test_limit
+    with_runtime_on_temp_repo do |target|
+      target.dispatch(["coming", "--name", "1"])
+      assert_equal(target.stdout.string.split, ["vanilla-please"])
+    end
+  end
+
+  def test_hello
+    with_runtime_on_temp_repo do |target|
+      dir = File.join(target.config.repo, "cards/foo")
+      target.dispatch(["coming"])
+      assert_equal(target.stdout.string.split, 
+                   [to_card_path(dir, "vanilla-please"),
+                    to_card_path(dir, "hello")])
     end
   end
 end

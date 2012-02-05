@@ -3,10 +3,12 @@ require 'optparse'
 require 'fileutils'
 require 'ankit/command'
 require 'ankit/add_command'
+require 'ankit/find_command'
 require 'ankit/hello_command'
 require 'ankit/list_command'
 require 'ankit/name_command'
 require 'ankit/score_command'
+require 'ankit/coming_command'
 
 module Ankit
 

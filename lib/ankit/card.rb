@@ -30,4 +30,10 @@ module Ankit
       original.gsub(/\W+/, "-").gsub(/^\-/, "").gsub(/\-$/, "").downcase
     end
   end
+
+  module CardNaming
+    def to_card_name(path) File.basename(path, ".card"); end
+    def to_card_path(dir, name) File.join(dir, "#{name}.card"); end
+    def card_wildcard_for(dir) File.join(dir, "*.card"); end
+  end
 end
