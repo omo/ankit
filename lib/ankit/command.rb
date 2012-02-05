@@ -22,7 +22,7 @@ module Ankit
     def self.define_options(&block) @option_spec = block end
     def self.option_spec; @option_spec; end
 
-    def initialize(runtime, args)
+    def initialize(runtime, args=[])
       @runtime = runtime
       @options = {}
       @args = OptionParser.new do |spec|

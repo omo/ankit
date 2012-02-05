@@ -16,10 +16,18 @@ module Ankit
   end
 
   module TestHelper
-    def make_runtime
+    def test_data_at(*args) File.join(TEST_DATA_BASE, *args); end
+    def repo_data_at(*args) File.join(HELLO_REPO, *args); end
+
+    def make_config
       config = Config.new
       config.repo = HELLO_REPO
-      RuntimeWithMockedIO.new(config)
+      config.location = "anomone"
+      config
+    end
+
+    def make_runtime
+      RuntimeWithMockedIO.new(make_config)
     end
   end
 end

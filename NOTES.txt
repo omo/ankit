@@ -8,20 +8,23 @@ Data query and manipulation:
  * list
    Lists all card paths.
 
- * name [--stdin] [FILE]
+ * name [--stdin] [FILE ...]
    Prints a suggested name of given card file.
+
+ * score FILE
+   Shows list of journal entries associated to the file.
 
  * add [-d DIR] [--stdin] [FILE ...]
    Adds given card to the specified directory.
 
- * pass NAME
+ * pass FILE
    Marks the card to pass.
 
- * fail NAME
+ * fail FILE
    Marks the card to fail.
 
  * coming [N]
-   Prints list of card names which is ready to challenge.
+   Prints list of card filenames which is ready to challenge.
 
  * hello
    Shows your configuration
@@ -60,14 +63,18 @@ Configuration parameters
  * location
    * default hostname
 
- * journal
-   The journal file path.
-   * default: <repo>/<hostname>.journal
-
  * card_paths
    The list of paths to search the card.
    Note that the each subdirectory is also searched
    * default: <repo>/cards
+
+Computed parameters:
+----------------
+
+ * journal
+   The journal file path.
+   * default: <repo>/<hostname>.journal
+
 
 Plan
 ------------------
@@ -78,4 +85,6 @@ Start from an as naive implentation as possible...
  + impl command infrastructure
  + impl list command
  + impl hello command
- - impl name command
+ + impl name command
+
+ - add command

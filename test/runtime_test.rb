@@ -5,32 +5,41 @@ require 'helpers'
 
 class ConfigTest < Test::Unit::TestCase
   include Ankit
+  include Ankit::TestHelper
 
   def test_defaults
     config = Config.new
     config.location = "hello"
-    assert_equal(File.expand_path("~/.ankit.d/hello.journal"), config.journal)
+    assert_equal(File.expand_path("~/.ankit.d/hello.journal"), config.primary_journal)
     assert_equal([File.expand_path("~/.ankit.d/cards")], config.card_paths)
+  end
+
+  def test_card_search_paths
+    target = make_config
+    assert_equal(["#{HELLO_REPO}/cards",
+                  "#{HELLO_REPO}/cards/bar",
+                  "#{HELLO_REPO}/cards/foo"],
+                 target.card_search_paths)
+  end
+
+  def test_journals
+    target = make_config
+    assert_equal(["#{HELLO_REPO}/anemone.journal",
+                  "#{HELLO_REPO}/baobab.journal"],
+                 target.journals)
   end
 
   def test_open
     config = Config.open(File.join(TEST_DATA_BASE, "hello_config.rb"))
-    assert_equal("hello_repo/hello.journal", config.journal)
+    assert_equal("hello_repo/hello.journal", config.primary_journal)
     assert_equal(["hello_repo/cards", "hello_repo/more"], config.card_paths)
   end
+
 end
 
 class RuntimeTest < Test::Unit::TestCase
   include Ankit
   include Ankit::TestHelper
-
-  def test_card_search_paths
-    target = make_runtime
-    assert_equal(["#{TEST_DATA_BASE}/hello_repo/cards",
-                  "#{TEST_DATA_BASE}/hello_repo/cards/bar",
-                  "#{TEST_DATA_BASE}/hello_repo/cards/foo"],
-                 target.card_search_paths)
-  end
 
   def test_split_subcommand
     assert_equal({global: [], subcommand: ["hello", "foo", "bar"]},

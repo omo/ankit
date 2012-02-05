@@ -5,18 +5,39 @@ require 'ankit/command'
 require 'ankit/hello_command'
 require 'ankit/list_command'
 require 'ankit/name_command'
+require 'ankit/score_command'
 
 module Ankit
 
   class Config
     DEFAULT_PATH = File.expand_path("~/.ankit")
 
-    attr_writer :repo, :location, :journal, :card_paths
+    attr_writer :repo, :location, :card_paths
 
     def repo; @repo ||= File.expand_path("~/.ankit.d"); end
     def location; @location ||= `hostname`.strip; end
-    def journal; @journal ||= File.join(repo, "#{location}.journal"); end
     def card_paths; @card_paths ||= [File.join(repo, "cards")]; end
+
+    # Computed parameters
+    def primary_journal
+      File.join(repo, "#{location}.journal")
+    end
+
+    def journals
+      Dir.glob(File.join(repo, "*.journal")).sort
+    end
+
+    def card_search_paths
+      paths = self.card_paths.dup
+      self.card_paths.each do |path|
+        Dir.glob(File.join(path, "*")).each do |f|
+          paths.push(f) if File.directory?(f)
+        end
+      end
+
+      paths.sort
+    end
+
 
     def self.open(path)
       config = self.new
@@ -32,7 +53,7 @@ module Ankit
       touch(DEFAULT_PATH) # TODO: Give same example settings.
       plain = Config.open(DEFAULT_PATH)
       (plain.card_paths + [plain.repo]).each { |p| FileUtils.mkdir_p(p) }
-      touch(plain.journal)
+      touch(plain.primary_journal)
       STDOUT.print("Prepared the default setting. You can edit #{DEFAULT_PATH}\n")
     end
 
@@ -87,17 +108,6 @@ module Ankit
     
     def initialize(config)
       @config = config
-    end
-
-    def card_search_paths
-      paths = @config.card_paths.dup
-      @config.card_paths.each do |path|
-        Dir.glob(File.join(path, "*")).each do |f|
-          paths.push(f) if File.directory?(f)
-        end
-      end
-
-      paths.sort
     end
 
     def dispatch(args)

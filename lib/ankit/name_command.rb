@@ -1,24 +1,16 @@
 
-require 'ankit/command'
+require 'ankit/text_reading_command'
 
 module Ankit
-  class NameCommand < Command
+  class NameCommand < TextReadingCommand
     available
-    define_options do |spec, options|
-      spec.on("-i", "--stdin") { options[:stdin] = true }
-    end
+    define_options { |s, o| superclass.option_spec.call(s, o) }
 
     def execute()
       validate_options
-      runtime.stdout.print("#{Card.parse(read).name}\n")
-    end
-
-    private
-
-    def read() options[:stdin] ? runtime.stdin.read : open(args[0]) { |f| f.read }; end
-    def validate_options
-      raise BadOptions, "--stdin cannot have any fileame" if options[:stdin] and not args.empty?
-      raise BadOptions, "need a fileame" if not options[:stdin] and args.empty?
+      each_text do |text|
+        runtime.stdout.print("#{Card.parse(text).name}\n")
+      end
     end
   end
 end

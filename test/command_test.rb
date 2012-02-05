@@ -64,7 +64,26 @@ class NameTest <  Test::Unit::TestCase
 
   def test_hello
     target = make_runtime
-    target.dispatch(["name", File.join(TEST_DATA_BASE, "hello_card.card")])
-    assert_equal(target.stdout.string.strip, "hello-world")
+    target.dispatch(["name", test_data_at("hello_card.card"), test_data_at("bye_card.card")])
+    assert_equal(target.stdout.string.split.map(&:strip), ["hello-world", "bye-universe"])
+  end
+end
+
+class ScoreTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+  def test_each_event
+    target = ScoreCommand.new(make_runtime, [])
+    all = target.to_enum(:each_event).to_a
+    assert_equal(all.size, 4)
+    assert_equal(all[0].class, Event)
+    assert_equal(target.to_enum(:each_event, "hello").to_a.size, 2)
+  end
+
+  def test_hello
+    target = make_runtime
+    target.dispatch(["score", repo_data_at("to_cards/foo/hello.card")])
+    assert_equal(2, target.stdout.string.split("\n").map(&:strip).size)
   end
 end
