@@ -9,25 +9,30 @@ module Ankit
     available
 
     def execute()
-      each_card_path { |f| runtime.stdout.print("#{f}\n") }
+      each_path { |f| runtime.stdout.print("#{f}\n") }
     end
 
-    def each_card_path(&block)
+    def each_path(&block)
       names.each do |n|
-        begin
-          runtime.config.card_search_paths.each do |p|
-            path = to_card_path(p, n)
-            if File.file?(path)
-              block.call(path) 
-              raise StopIteration
-            end
-          end
-        rescue StopIteration
-          # try next name
-        end
+        found = path_for(n)
+        block.call(found) if found
       end
     end
 
+    def path_for(name)
+      found_in = runtime.config.card_search_paths.find do |p|
+        File.file?(to_card_path(p, name))
+      end
+
+      found_in ? to_card_path(found_in, name) : nil
+    end
+
     def names; args; end
+  end
+
+  module Finding
+    def find_paths(runtime, names)
+      FindCommand.new(runtime, names).to_enum(:each_path).to_a
+    end
   end
 end

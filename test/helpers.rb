@@ -6,11 +6,12 @@ require 'fileutils'
 module Ankit
   TEST_DATA_BASE = File.join(File.dirname(__FILE__), "data")
   HELLO_REPO = File.join(TEST_DATA_BASE, "hello_repo")
+  VANILLA_REPO = File.join(TEST_DATA_BASE, "vanilla_repo")
 
   class RuntimeWithMockedIO < Runtime
     def initialize(config)
       super
-      ["stdin=", "stdout=", "stderr="].each { |m| self.send(m, StringIO.new) }
+      supress_io
     end
 
     def printed_line; self.stdout.string.strip; end
@@ -37,6 +38,10 @@ module Ankit
 
     def make_runtime(repo_dir=HELLO_REPO)
       RuntimeWithMockedIO.new(make_config(repo_dir))
+    end
+
+    def make_vanilla_runtime()
+      make_runtime(VANILLA_REPO)
     end
 
     def with_runtime_on_temp_repo(&block)

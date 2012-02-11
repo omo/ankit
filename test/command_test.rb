@@ -4,6 +4,7 @@ require 'ankit/runtime'
 require 'test/unit'
 require 'fileutils'
 require 'tmpdir'
+require 'mocha'
 
 class CommandTest < Test::Unit::TestCase
   include Ankit
@@ -104,6 +105,10 @@ class RoundTest < Test::Unit::TestCase
   def test_hello
     assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "2")
   end
+
+  def test_vanilla
+    assert_equal(make_vanilla_runtime.dispatch_then(["round"]).printed_line, "0")
+  end
 end
 
 class AddTest < Test::Unit::TestCase
@@ -198,7 +203,7 @@ class FailPassTest < Test::Unit::TestCase
       path = path_for(target, card)
       target.dispatch([command, path])
       assert_equal(target.printed_lines.size, 1)
-      events = Coming.list(target)
+      events = Coming.coming_events(target)
       block.call(events)
     end
   end
@@ -236,5 +241,104 @@ class FailPassTest < Test::Unit::TestCase
       assert_equal(events[0].maturity, 0)
     end
   end
+end
+
+class ChallengeTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+  include Ankit::CardNaming, Ankit::Coming
+
+  def test_initial_state
+    with_runtime_on_temp_repo do |target|
+      actual = ChallengeCommand.new(target).initial_state
+      assert_instance_of(Challenge::QuestionState, actual)
+      assert_equal(2, actual.progress.slots.size)
+    end
+  end
+
+  FIRST_CORRECT_ANSWER = "Vanilla, Please?"
+  SECOND_CORRECT_ANSWER = "Hello"
+  FIRST_WRONG_ANSWER = "Doesn't Match"
+
+  def hit_return_pump(state)
+    state.progress.runtime.line = HighLine.new
+    state.progress.runtime.line.stubs(:ask).once()
+    state.pump
+  end
+
+  def enter_text_pump(state, text)
+    state.progress.runtime.line = HighLine.new
+    state.progress.runtime.line.stubs(:say).at_least(1)
+    state.progress.runtime.line.stubs(:ask).once().returns(text)
+    state.pump
+  end
+
+  def agree_pump(state, that)
+    state.progress.runtime.line = HighLine.new
+    state.progress.runtime.line.stubs(:say).at_least(0)
+    state.progress.runtime.line.stubs(:agree).once().returns(that)
+    state.pump
+  end
+
+  def test_question_to_fail
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual_next = enter_text_pump(actual, FIRST_WRONG_ANSWER)
+      assert_instance_of(Challenge::FailedState, actual_next)
+      actual_next = hit_return_pump(actual_next)
+      assert_instance_of(Challenge::QuestionState, actual_next)
+      assert_equal(actual_next.progress.npassed, 0)
+      assert_equal(actual_next.progress.nfailed, 1)
+    end
+  end
+
+  def test_question_to_pass
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual_next = enter_text_pump(actual, FIRST_CORRECT_ANSWER)
+      assert_instance_of(Challenge::PassedState, actual_next)
+      actual_next = actual_next.pump
+      assert_instance_of(Challenge::QuestionState, actual_next)
+      assert_equal(actual_next.progress.npassed, 1)
+      assert_equal(actual_next.progress.nfailed, 0)
+    end
+  end
+
+  def pass_two(state)
+    state = enter_text_pump(state, FIRST_CORRECT_ANSWER)
+    assert_instance_of(Challenge::PassedState, state)
+    state = state.pump
+    assert_instance_of(Challenge::QuestionState, state)
+    state = enter_text_pump(state, SECOND_CORRECT_ANSWER)
+    assert_instance_of(Challenge::PassedState, state)
+    state.pump
+  end
+
+  def test_to_breaking
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual_next = pass_two(actual)
+      assert_instance_of(Challenge::BreakingState, actual_next)
+    end
+  end
+
+  def test_to_breaking_to_over
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual = pass_two(actual)
+      actual = agree_pump(actual, false)
+      assert_instance_of(Challenge::OverState, actual)
+    end
+  end
+
+  def test_to_breaking_to_more
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual = pass_two(actual)
+      actual = agree_pump(actual, true)
+      assert_instance_of(Challenge::QuestionState, actual)
+    end
+  end
+
 end
 

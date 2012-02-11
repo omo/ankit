@@ -29,6 +29,11 @@ module Ankit
     def name
       original.gsub(/\W+/, "-").gsub(/^\-/, "").gsub(/\-$/, "").downcase
     end
+
+    # FIXME: Needs tests.
+    def match?(text)
+      original == text
+    end
   end
 
   module CardNaming

@@ -1,8 +1,10 @@
 
 require 'optparse'
 require 'fileutils'
+require 'highline'
 require 'ankit/command'
 require 'ankit/add_command'
+require 'ankit/challenge_command'
 require 'ankit/coming_command'
 require 'ankit/fail_command'
 require 'ankit/find_command'
@@ -61,9 +63,10 @@ module Ankit
   end
 
   class Runtime
-    attr_writer :stdin, :stdout, :stderr
+    attr_writer :line, :stdin, :stdout, :stderr
     attr_reader :config
 
+    def line; @line ||= HighLine.new; end
     def stdin; @stdin ||= STDIN; end
     def stdout; @stdout ||= STDOUT; end
     def stderr; @stderr ||= STDERR; end
@@ -120,6 +123,25 @@ module Ankit
     def dispatch_then(args)
       dispatch(args)
       self
+    end
+
+    def supress_io
+      saved = [@stdin, @stdout, @stderr]
+      ["stdin=", "stdout=", "stderr="].each { |m| self.send(m, StringIO.new) }
+      saved
+    end
+
+    def unsupress_io(saved)
+      @stdin, @stdout, @stderr =  saved
+    end
+
+    def with_supressing_io(&block)
+      saved = supress_io
+      begin
+        block.call
+      ensure
+        unsupress_io(saved)
+      end
     end
   end
 end

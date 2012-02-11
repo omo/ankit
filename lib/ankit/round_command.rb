@@ -11,7 +11,8 @@ module Ankit
     end
 
     def find
-      to_enum(:each_event).max_by(&:round).round
+      found = to_enum(:each_event).max_by(&:round)
+      found ? found.round : 0
     end
   end
 

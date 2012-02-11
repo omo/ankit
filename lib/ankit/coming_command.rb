@@ -17,16 +17,30 @@ module Ankit
     DEFAULT_COUNT = -1
 
     def execute()
-      sorted_names = each_sorted_events.map(&:name)
-      toprint = options[:name] ? sorted_names : FindCommand.new(runtime, sorted_names).to_enum(:each_card_path)
-      toprint.take(0 <= count ? count : sorted_names.size).each { |i| runtime.stdout.print("#{i}\n") }
+      toprint = to_enum(options[:name] ? :each_coming_names : :each_coming_paths).to_a
+      toprint.take(0 <= count ? count : name_to_events.size).each { |i| runtime.stdout.print("#{i}\n") }
     end
 
-    def each_sorted_events(&block)
+    def each_coming_names(&block); each_coming_events { |e| block.call(e.name) }; end
+
+    def each_coming_paths(&block)
+      find_command = FindCommand.new(runtime)
+      each_coming_events do |event|
+        found = find_command.path_for(event.name)
+        block.call(found) if found
+      end
+    end
+
+    def each_coming_events(&block)
       name_to_events.values.sort_by(&:next_round).each(&block)
     end
 
     def name_to_events
+      @name_to_events ||= compute_name_to_events
+    end
+
+    private
+    def compute_name_to_events
       ret = {}
       # TODO: recent-to-past order would be better.
       EventTraversingCommand.new(runtime).to_enum(:each_event).reduce(ret) do |a, e|
@@ -50,8 +64,12 @@ module Ankit
   end
 
   module Coming
-    def self.list(runtime)
-      ComingCommand.new(runtime).to_enum(:each_sorted_events).to_a
+    def self.coming_events(runtime)
+      ComingCommand.new(runtime).to_enum(:each_coming_events).to_a
+    end
+
+    def self.coming_paths(runtime)
+      ComingCommand.new(runtime).to_enum(:each_coming_paths).to_a
     end
   end
 

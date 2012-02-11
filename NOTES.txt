@@ -83,6 +83,11 @@ Computed parameters:
    * default: <repo>/<hostname>.journal
 
 
+Emacs
+----------------
+
+ * See elisp.
+
 Plan
 ------------------
 
@@ -99,3 +104,7 @@ Start from an as naive implentation as possible...
  + coming command
  + pass command
  + fail command
+ > emacs
+   + default add
+   + curren dir add
+ - challenge
