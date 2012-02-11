@@ -342,3 +342,17 @@ class ChallengeTest < Test::Unit::TestCase
 
 end
 
+class StylableTextTest < Test::Unit::TestCase
+  include Ankit
+  include Ankit::TestHelper
+
+
+  def test_hello
+    assert_equal("Hello, \e[31mWorld\e[0m!", 
+                 StylableText.new("Hello, [World]!").decorated(:failed))
+    assert_equal("\e[31mHello, World!\e[0m", 
+                 StylableText.new("Hello, World!").decorated(:failed))
+    assert_equal("Hello, *****!", 
+                 StylableText.new("Hello, [World]!").decorated(:hidden))
+  end
+end

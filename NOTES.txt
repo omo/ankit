@@ -107,4 +107,13 @@ Start from an as naive implentation as possible...
  > emacs
    + default add
    + curren dir add
- - challenge
+ + challenge basic
+ > challenge deco
+   + show hidden text
+   . colorify illustrative text.
+   + clear terminal for each question.
+
+----
+ - challenge: show diff of failed text.
+ - challenge: show maturity after pass.
+ - Show some stats for each break.

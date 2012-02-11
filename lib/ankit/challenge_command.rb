@@ -8,7 +8,31 @@ require 'ankit/round_command'
 require 'highline'
 
 module Ankit
-  
+
+  class StylableText
+    def self.styled_text(text, type)
+      case type
+      when :hidden
+        text.gsub(/\w/, "*")
+      when :failed
+        HighLine.color(text, HighLine::RED_STYLE)
+      else
+        raise
+      end
+    end
+
+    def initialize(text); @text = text; end
+
+    def decorated(type)
+      decorated = @text.gsub(/\[(.*?)\]/) { |t| self.class.styled_text($1, type) }
+      decorated != @text ? decorated : self.class.styled_text(@text, type)
+    end
+  end
+
+  class Card
+    def hidden_original; StylableText.new(self.original).decorated(:hidden); end
+  end
+
   module Challenge
     class Slot < Struct.new(:path, :rating); end
 
@@ -64,6 +88,12 @@ module Ankit
         end
       end
 
+      def clear_screen
+        runtime.stdout.print("\033[2J")
+        h = HighLine::SystemExtensions.terminal_size[0]
+        runtime.stdout.print("\033[#{h}0A")
+      end
+
       def say(msg, type=:progress)
         line.say(message_for(msg, type))
       end
@@ -85,11 +115,13 @@ module Ankit
       def message_for(body, type)
         case type
         when :progress
-          " #{progress.index}/#{progress.size}:"
+          " #{progress.index}/#{progress.size}: "
         when :fail
-          "FAIL:"
+          StylableText.new("FAIL: ").decorated(:failed)
         when :pass
-          "PASS:"
+          "PASS: "
+        when :cont
+          "      "
         else
           raise "Unknown header type:#{type}"
         end + body
@@ -100,10 +132,10 @@ module Ankit
 
     class QuestionState < State
       def pump
-        # XXX: clear terminal
+        clear_screen
         card = progress.current_card
         say("#{card.translation}")
-        # XXX: show hidden text.
+        say("#{card.hidden_original}", :cont)
         answered = ask()
         (card.match?(answered.strip) ? PassedState : FailedState).new(progress)
       end
@@ -158,7 +190,13 @@ module Ankit
     DEFAULT_COUNT = -1
 
     def execute()
+      Signal.trap("INT") do
+        STDERR.print("Quit.\n")
+        exit(0)
+      end
+
       initial_state.keep_pumping_until { |state| state.over? }
+      Signal.trap("INT", "DEFAULT")
     end
   end
 end
