@@ -36,28 +36,36 @@ module Ankit
       name_to_events.values.sort_by(&:next_round).each(&block)
     end
 
+    def each_existing_events(&block)
+      name_to_existing_events.values.sort_by(&:next_round).each(&block)
+    end
+
     def name_to_events
       @name_to_events ||= compute_name_to_events
+    end
+
+    def name_to_existing_events
+      EventTraversingCommand.new(runtime).to_enum(:each_event).reduce({}) do |a, e|
+        existing = a[e.name]
+        a[e.name] = e if existing.nil? or existing.round < e.round
+        a
+      end
+    end
+
+    def name_to_vanilla_events
+      vanilla_round = round - 1 # forces to come upfront.
+      ListCommand.new(runtime).to_enum(:each_card_name).reduce({}) do |a, name|
+        a[name] = Event.for_card(name, "vanilla", Envelope.fresh(vanilla_round))
+        a
+      end
     end
 
     private
 
     def compute_name_to_events
-      ret = {}
-      # TODO: recent-to-past order would be better.
-      EventTraversingCommand.new(runtime).to_enum(:each_event).reduce(ret) do |a, e|
-        existing = a[e.name]
-        a[e.name] = e if existing.nil? or existing.round < e.round
-        a
-      end
-
-      ListCommand.new(runtime).to_enum(:each_card_name).reduce(ret) do |a, name|
-        existing = a[name]
-        a[name] = Event.for_card(name, "vanilla", Envelope.fresh(round)) if existing.nil?
-        a
-      end
-
-      ret
+      existing = name_to_existing_events
+      vanilla = name_to_vanilla_events
+      vanilla.merge(existing)
     end
 
     def count
@@ -72,6 +80,10 @@ module Ankit
 
     def self.coming_paths(runtime)
       ComingCommand.new(runtime).to_enum(:each_coming_paths).to_a
+    end
+
+    def self.existing_events(runtime)
+      ComingCommand.new(runtime).to_enum(:each_existing_events).to_a
     end
   end
 

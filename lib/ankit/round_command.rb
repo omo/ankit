@@ -1,9 +1,10 @@
 
 require 'ankit/card'
-require 'ankit/event_traversing_command'
+#require 'ankit/event_traversing_command'
+require 'ankit/coming_command'
 
 module Ankit
-  class RoundCommand < EventTraversingCommand
+  class RoundCommand < Command
     available
 
     def execute()
@@ -11,7 +12,7 @@ module Ankit
     end
 
     def find
-      found = to_enum(:each_event).max_by(&:round)
+      found = Coming.existing_events(runtime).min_by(&:round)
       found ? found.round : 0
     end
   end

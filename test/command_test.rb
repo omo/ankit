@@ -109,7 +109,7 @@ class RoundTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "6")
+    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "5")
   end
 
   def test_vanilla
@@ -243,7 +243,7 @@ class FailPassTest < Test::Unit::TestCase
 
   def test_fail_vintage
     run_test_against("fail", VINTAGE) do |events|
-      assert_equal(events.map(&:name), [VINTAGE, VANILLA, JUNIOR, MIDDLE])
+      assert_equal(events.map(&:name), [VANILLA, VINTAGE, JUNIOR, MIDDLE])
       assert_equal(events[0].maturity, 0)
     end
   end
