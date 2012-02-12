@@ -168,6 +168,15 @@ module Ankit
       def ask_header; "    > "; end
     end
 
+    # XXX: test
+    class EditState < State
+      def pump
+        # XXX: makes configurable
+        system("vi " + progress.current_path)
+        QuestionState.new(progress)
+      end
+    end
+
     class QuestionState < State
       def pump
         clear_screen
@@ -175,7 +184,21 @@ module Ankit
         say("#{card.translation}")
         say("#{card.hidden_original}", :cont)
         answered = ask().strip
-        (card.match?(answered.strip) ? PassedState : FailedState).new(progress, answered)
+        m = /^\/(\w+)/.match(answered) 
+        if m
+          pump_command($1)
+        else
+          (card.match?(answered.strip) ? PassedState : FailedState).new(progress, answered)
+        end
+      end
+
+      def pump_command(command)
+        case command
+        when "edit"
+          EditState.new(progress)
+        else
+          raise
+        end
       end
     end
 
