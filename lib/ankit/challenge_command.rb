@@ -202,12 +202,26 @@ module Ankit
 
     class BreakingState < State
       def pump
-        return OverState.new(progress) unless ask_more
-        initial_state
+        case ask_more
+        when :yes
+          initial_state
+        when :no
+          OverState.new(progress)
+        else
+          # TODO: handle help
+          self
+        end
       end
 
       def ask_more
-        line.agree("More(y/n)? ")
+        case line.ask("More(y/n/?) ").strip
+        when /^y/, ""
+          :yes
+        when /^n/
+          :no
+        else
+          :help
+        end  
       end
 
       def coming_limit

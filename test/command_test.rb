@@ -95,6 +95,12 @@ class ScoreTest < Test::Unit::TestCase
     target.dispatch(["score", repo_data_at("to_cards/foo/hello.card")])
     assert_equal(2, target.printed_lines.size)
   end
+
+  def test_find_dup
+    target = make_runtime
+    latest = EventTraversing.find_latest_event_for(target, repo_data_at("to_cards/foo/hello.card"))
+    assert_equal(latest.round, 6)
+  end
 end
 
 
@@ -103,7 +109,7 @@ class RoundTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "2")
+    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "6")
   end
 
   def test_vanilla
@@ -289,7 +295,7 @@ class ChallengeTest < Test::Unit::TestCase
   def agree_pump(state, that)
     state.progress.runtime.line = HighLine.new
     state.progress.runtime.line.stubs(:say).at_least(0)
-    state.progress.runtime.line.stubs(:agree).once().returns(that)
+    state.progress.runtime.line.stubs(:ask).once().returns(that)
     state.pump
   end
 
@@ -339,7 +345,7 @@ class ChallengeTest < Test::Unit::TestCase
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime).initial_state
       actual = pass_two(actual)
-      actual = agree_pump(actual, false)
+      actual = agree_pump(actual, "n")
       assert_instance_of(Challenge::OverState, actual)
     end
   end
@@ -348,17 +354,24 @@ class ChallengeTest < Test::Unit::TestCase
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime).initial_state
       actual = pass_two(actual)
-      actual = agree_pump(actual, true)
+      actual = agree_pump(actual, "y")
       assert_instance_of(Challenge::QuestionState, actual)
     end
   end
 
+  def test_to_breaking_to_more
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual = pass_two(actual)
+      actual = agree_pump(actual, "?")
+      assert_instance_of(Challenge::BreakingState, actual)
+    end
+  end
 end
 
 class StylableTextTest < Test::Unit::TestCase
   include Ankit
   include Ankit::TestHelper
-
 
   def test_hello
     assert_equal("Hello, \e[31mWorld\e[0m!", 

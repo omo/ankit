@@ -116,12 +116,20 @@ Start from an as naive implentation as possible...
  + challenge: show diff of failed text.
  + challenge: show maturity after pass.
  + elisp directory specification
- - limit # of coming on challenge.
+ + limit # of coming on challenge.
+
+ - round computation is broken.
 
 ----
- - in-place editing.
+
  - Show some stats for each break.
-   list of maturities for now?
+   - list of maturities
+   - total # of challenges today/this session(pass?).
+ - compaction command
+
+ - skip "pass" just before break
+ - a way to skip fail.
+ - in-place editing.
 
  > untra
    - exclude untra from challenge.
