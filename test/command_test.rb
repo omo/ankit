@@ -262,6 +262,7 @@ class ChallengeTest < Test::Unit::TestCase
 
   def hit_return_pump(state)
     state.progress.runtime.line = HighLine.new
+    state.progress.runtime.line.stubs(:say).at_least(0)
     state.progress.runtime.line.stubs(:ask).once()
     state.pump
   end
@@ -297,7 +298,7 @@ class ChallengeTest < Test::Unit::TestCase
       actual = ChallengeCommand.new(runtime).initial_state
       actual_next = enter_text_pump(actual, FIRST_CORRECT_ANSWER)
       assert_instance_of(Challenge::PassedState, actual_next)
-      actual_next = actual_next.pump
+      actual_next = hit_return_pump(actual_next)
       assert_instance_of(Challenge::QuestionState, actual_next)
       assert_equal(actual_next.progress.npassed, 1)
       assert_equal(actual_next.progress.nfailed, 0)
@@ -307,11 +308,11 @@ class ChallengeTest < Test::Unit::TestCase
   def pass_two(state)
     state = enter_text_pump(state, FIRST_CORRECT_ANSWER)
     assert_instance_of(Challenge::PassedState, state)
-    state = state.pump
+    state = hit_return_pump(state)
     assert_instance_of(Challenge::QuestionState, state)
     state = enter_text_pump(state, SECOND_CORRECT_ANSWER)
     assert_instance_of(Challenge::PassedState, state)
-    state.pump
+    hit_return_pump(state)
   end
 
   def test_to_breaking
@@ -354,5 +355,11 @@ class StylableTextTest < Test::Unit::TestCase
                  StylableText.new("Hello, World!").decorated(:failed))
     assert_equal("Hello, *****!", 
                  StylableText.new("Hello, [World]!").decorated(:hidden))
+  end
+
+  def test_diff
+    StylableText.new("hello").diff("helo")
+    StylableText.new("helo").diff("hello")
+    StylableText.new("helxo").diff("hello")
   end
 end

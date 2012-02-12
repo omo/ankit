@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 require 'ankit/command'
 require 'ankit/coming_command'
@@ -6,6 +7,7 @@ require 'ankit/find_command'
 require 'ankit/pass_command'
 require 'ankit/round_command'
 require 'highline'
+require 'diff/lcs'
 
 module Ankit
 
@@ -16,6 +18,12 @@ module Ankit
         text.gsub(/\w/, "*")
       when :failed
         HighLine.color(text, HighLine::RED_STYLE)
+      when :passed
+        HighLine.color(text, HighLine::GREEN_STYLE)
+      when :plus
+        HighLine.color(text, HighLine::RED_STYLE)
+      when :minus
+        HighLine.color(text, HighLine::REVERSE_STYLE)
       else
         raise
       end
@@ -27,16 +35,39 @@ module Ankit
       decorated = @text.gsub(/\[(.*?)\]/) { |t| self.class.styled_text($1, type) }
       decorated != @text ? decorated : self.class.styled_text(@text, type)
     end
+
+    def diff(orig)
+      return @text if @text.empty?
+
+      changes = Diff::LCS.sdiff(orig, @text)
+      changes.map do |ch|
+        case ch.action
+        when "="
+          ch.new_element
+        when "!"
+          self.class.styled_text(ch.new_element, :plus)
+        when "-"
+          self.class.styled_text(ch.old_element, :minus)
+        when "+"
+          self.class.styled_text(ch.new_element, :plus)
+        else
+          raise
+        end
+      end.join("")
+    end
   end
 
   class Card
     def hidden_original; StylableText.new(self.original).decorated(:hidden); end
+    def diff_from_original(text) StylableText.new(self.original).diff(text); end
   end
 
   module Challenge
-    class Slot < Struct.new(:path, :rating); end
+    class Slot < Struct.new(:path, :rating, :event); end
 
     class Progress
+      include CardHappening, CardNaming
+
       attr_reader :runtime, :slots, :index, :npassed, :nfailed
 
       def initialize(runtime, slots)
@@ -49,6 +80,7 @@ module Ankit
         Card.parse(open(current_path, "r") { |f| f.read })
       end
 
+      def last_slot; @slots[@index-1]; end
       def current_slot; @slots[@index]; end
       def current_path; current_slot.path; end
       def size; @slots.size; end
@@ -56,8 +88,9 @@ module Ankit
 
       def fail
         unless current_slot.rating
-          current_slot.rating = :failed
-          runtime.with_supressing_io { runtime.dispatch(["fail", current_path]) }
+          last_slot = current_slot
+          last_slot.rating = :failed
+          last_slot.event = make_happen(FailCommand::EVENT_HAPPENING, to_card_name(current_path))
         end
         
         @nfailed += 1
@@ -65,8 +98,9 @@ module Ankit
 
       def pass
         unless current_slot.rating
-          current_slot.rating = :passed
-          runtime.with_supressing_io { runtime.dispatch(["pass", current_path]) }
+          last_slot = current_slot
+          last_slot.rating = :passed
+          last_slot.event = make_happen(PassCommand::EVENT_HAPPENING, to_card_name(current_path))
         end
 
         @npassed += 1
@@ -75,10 +109,10 @@ module Ankit
     end
 
     class State
-      attr_reader :progress
+      attr_reader :progress, :last_answer
 
-      def initialize(progress)
-        @progress = progress
+      def initialize(progress, last_answer=nil)
+        @progress, @last_answer = progress, last_answer
       end
 
       def keep_pumping_until(&block)
@@ -102,8 +136,8 @@ module Ankit
         line.ask(message_for(msg, type) + " ") { |q| q.readline = true }
       end
 
-      def ask(msg="")
-        line.ask(ask_header + msg) { |q| q.readline = true }
+      def ask(msg="", type=:ask)
+        line.ask(message_for(msg, type)) { |q| q.readline = true }
       end
 
       def over?; false; end
@@ -119,7 +153,11 @@ module Ankit
         when :fail
           StylableText.new("FAIL: ").decorated(:failed)
         when :pass
-          "PASS: "
+          StylableText.new("PASS: ").decorated(:passed)
+        when :ask
+          "    > "
+        when :hit_return
+          "    < "
         when :cont
           "      "
         else
@@ -136,15 +174,17 @@ module Ankit
         card = progress.current_card
         say("#{card.translation}")
         say("#{card.hidden_original}", :cont)
-        answered = ask()
-        (card.match?(answered.strip) ? PassedState : FailedState).new(progress)
+        answered = ask().strip
+        (card.match?(answered.strip) ? PassedState : FailedState).new(progress, answered)
       end
     end
 
     class FailedState < State
       def pump
         progress.fail
-        show_and_ask_enter("#{progress.current_card.original}", :fail)
+        diff_from_original = progress.current_card.diff_from_original(last_answer)
+        say("#{diff_from_original}", :fail)
+        ask("", :hit_return)
         QuestionState.new(progress)
       end
     end
@@ -153,6 +193,9 @@ module Ankit
       def pump
         card = progress.current_card
         progress.pass
+        last_maturity = progress.last_slot.event.maturity
+        say("Maturity: #{last_maturity}", :pass)
+        ask("", :hit_return)
         progress.over? ? BreakingState.new(progress) : QuestionState.new(progress)
       end
     end

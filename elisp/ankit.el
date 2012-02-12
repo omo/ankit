@@ -15,8 +15,9 @@
   (interactive)
   (define-prefix-command 'ctl-x-a-map)
   (define-key ctl-x-map "a" 'ctl-x-a-map)
-  (define-key ctl-x-a-map "n" 'ankit-ask-add-default)
-  (define-key ctl-x-a-map "N" 'ankit-ask-add-here))
+  (define-key ctl-x-a-map "n" 'ankit-ask-add)
+  (define-key ctl-x-a-map "N" 'ankit-ask-add-default)
+  (define-key ctl-x-a-map "h" 'ankit-ask-add-here))
 
 ;;
 ;; Defining a mode:
@@ -48,7 +49,7 @@
   (ankit-ask-add ankit-card-dir))
 
 (defun ankit-ask-add (dir)
-  (interactive)
+  (interactive "DCard path:")
   (setq ankit-card-dir dir)
   (let ((source-buffer (generate-new-buffer "*ankit-asking-add*")))
     (switch-to-buffer source-buffer)

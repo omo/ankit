@@ -114,6 +114,16 @@ Start from an as naive implentation as possible...
    + clear terminal for each question.
 
 ----
- - challenge: show diff of failed text.
- - challenge: show maturity after pass.
+ + challenge: show diff of failed text.
+ + challenge: show maturity after pass.
+ - elisp directory specification
  - Show some stats for each break.
+   list of maturities for now?
+
+ > untra
+   - exclude untra from challenge.
+   - cli: list non-translated cards
+   - emacs support
+ > browser support
+   - add daemon
+   - chrome extension
