@@ -367,6 +367,8 @@ class StylableTextTest < Test::Unit::TestCase
                  StylableText.new("Hello, World!").decorated(:failed))
     assert_equal("Hello, *****!", 
                  StylableText.new("Hello, [World]!").decorated(:hidden))
+    assert_equal("*****, *****!", 
+                 StylableText.new("[Hello, World]!").decorated(:hidden))
   end
 
   def test_diff

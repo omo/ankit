@@ -30,9 +30,11 @@ module Ankit
       original.gsub(/\W+/, "-").gsub(/^\-/, "").gsub(/\-$/, "").downcase
     end
 
+    def plain_original; original.gsub(/\[(.*?)\]/) { |t| $1 }; end
+
     # FIXME: Needs tests.
     def match?(text)
-      original == text
+      plain_original == text
     end
   end
 

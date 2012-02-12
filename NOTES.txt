@@ -119,6 +119,7 @@ Start from an as naive implentation as possible...
  - limit # of coming on challenge.
 
 ----
+ - in-place editing.
  - Show some stats for each break.
    list of maturities for now?
 

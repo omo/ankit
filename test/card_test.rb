@@ -64,4 +64,15 @@ T: Konichiwa, Genki?
   def test_guess_id_with_conflict
     # XXX: will tackle later
   end
+
+  def test_match_hello
+    target = Card.new(o: "Hello")
+    assert( target.match?("Hello"))
+    assert(!target.match?("Bye"))
+  end
+
+  def test_match_gracket
+    target = Card.new(o: "Hello, [World].")
+    assert( target.match?("Hello, World."))
+  end
 end
