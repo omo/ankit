@@ -113,10 +113,12 @@ Start from an as naive implentation as possible...
    . colorify illustrative text.
    + clear terminal for each question.
 
-----
  + challenge: show diff of failed text.
  + challenge: show maturity after pass.
- - elisp directory specification
+ + elisp directory specification
+ - limit # of coming on challenge.
+
+----
  - Show some stats for each break.
    list of maturities for now?
 

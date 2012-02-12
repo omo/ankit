@@ -7,6 +7,7 @@ module Ankit
   TEST_DATA_BASE = File.join(File.dirname(__FILE__), "data")
   HELLO_REPO = File.join(TEST_DATA_BASE, "hello_repo")
   VANILLA_REPO = File.join(TEST_DATA_BASE, "vanilla_repo")
+  NUMBER_REPO = File.join(TEST_DATA_BASE, "number_repo")
 
   class RuntimeWithMockedIO < Runtime
     def initialize(config)

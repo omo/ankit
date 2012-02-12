@@ -209,6 +209,10 @@ module Ankit
       def ask_more
         line.agree("More(y/n)? ")
       end
+
+      def coming_limit
+        progress.size
+      end
     end
 
     class OverState < State
@@ -217,7 +221,7 @@ module Ankit
 
     module Approaching
       def initial_state
-        slots = Coming.coming_paths(self.runtime).map { |path| Slot.new(path, nil) }
+        slots = Coming.coming_paths(self.runtime).take(self.coming_limit).map { |path| Slot.new(path, nil) }
         QuestionState.new(Progress.new(self.runtime, slots))
       end
     end
@@ -230,7 +234,11 @@ module Ankit
     include Challenge::Approaching
     available
 
-    DEFAULT_COUNT = -1
+    define_options do |spec, options| 
+      spec.on("-l", "--limit N") { |n| options[:limit] = n.to_i }
+    end
+
+    DEFAULT_COUNT = 5
 
     def execute()
       Signal.trap("INT") do
@@ -240,6 +248,10 @@ module Ankit
 
       initial_state.keep_pumping_until { |state| state.over? }
       Signal.trap("INT", "DEFAULT")
+    end
+
+    def coming_limit
+      options[:limit] or DEFAULT_COUNT
     end
   end
 end

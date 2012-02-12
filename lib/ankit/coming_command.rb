@@ -14,19 +14,20 @@ module Ankit
       spec.on("-n", "--name") { options[:name] = true }
     end
 
-    DEFAULT_COUNT = -1
+    DEFAULT_COUNT = 6
+
+    def find_command; @find_command ||= FindCommand.new(runtime); end
 
     def execute()
-      toprint = to_enum(options[:name] ? :each_coming_names : :each_coming_paths).to_a
+      toprint = to_enum(options[:name] ? :each_coming_names : :each_coming_paths)
       toprint.take(0 <= count ? count : name_to_events.size).each { |i| runtime.stdout.print("#{i}\n") }
     end
 
     def each_coming_names(&block); each_coming_events { |e| block.call(e.name) }; end
 
     def each_coming_paths(&block)
-      find_command = FindCommand.new(runtime)
       each_coming_events do |event|
-        found = find_command.path_for(event.name)
+        found = self.find_command.path_for(event.name)
         block.call(found) if found
       end
     end
@@ -40,6 +41,7 @@ module Ankit
     end
 
     private
+
     def compute_name_to_events
       ret = {}
       # TODO: recent-to-past order would be better.

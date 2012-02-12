@@ -256,6 +256,18 @@ class ChallengeTest < Test::Unit::TestCase
     end
   end
 
+  def test_initial_state_limit_default
+    runtime = make_runtime(NUMBER_REPO)
+    actual = runtime.make_command(["challenge"]).initial_state
+    assert_equal(actual.progress.size, ChallengeCommand::DEFAULT_COUNT)
+  end
+
+  def test_initial_state_limit_args
+    runtime = make_runtime(NUMBER_REPO)
+    actual = runtime.make_command(["challenge", "--limit", "2"]).initial_state
+    assert_equal(actual.progress.size, 2)
+  end
+
   FIRST_CORRECT_ANSWER = "Vanilla, Please?"
   SECOND_CORRECT_ANSWER = "Hello"
   FIRST_WRONG_ANSWER = "Doesn't Match"

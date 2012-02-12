@@ -112,9 +112,13 @@ module Ankit
       @config = config
     end
 
-    def dispatch(args)
+    def make_command(args)
       name = args.shift
-      command = Command.by_name[name].new(self, args)
+      Command.by_name[name].new(self, args)
+    end
+
+    def dispatch(args)
+      command = make_command(args)
       command.execute()
       command
     end
