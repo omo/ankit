@@ -59,7 +59,7 @@ module Ankit
 
   class Card
     def hidden_original; StylableText.new(self.original).decorated(:hidden); end
-    def diff_from_original(text) StylableText.new(self.original).diff(text); end
+    def diff_from_original(text) StylableText.new(self.plain_original).diff(text); end
   end
 
   module Challenge
