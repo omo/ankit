@@ -277,30 +277,9 @@ module Ankit
       end
     end
 
-    class QuestionState < State
-      def pump
-        progress.attack
-        clear_screen
-        show_header
-        card = progress.current_card
-        say("#{card.translation}")
-        say("#{card.hidden_original}", :cont)
-        answered = ask().strip
-        m = /^\/(\w+)/.match(answered) 
-        if m
-          pump_command($1)
-        else
-          case card.match?(answered.strip)
-          when :match
-            PassedState.new(progress, answered)
-          when :wrong
-            FailedState.new(progress, answered)
-          when :typo
-            TypoState.new(progress, answered)
-          else
-            raise
-          end
-        end
+    module CommandRecognizing 
+      def may_pump_command(answered)
+        /^\/(\w+)/.match(answered) ? pump_command($1) : nil
       end
 
       def pump_command(command)
@@ -313,12 +292,42 @@ module Ankit
       end
     end
 
-    class FailedStateBase < State
+    class QuestionState < State
+      include CommandRecognizing
+
       def pump
-        mark_progress
+        progress.attack
+        clear_screen
+        show_header
+        card = progress.current_card
+        say("#{card.translation}")
+        say("#{card.hidden_original}", :cont)
+        answered = ask().strip
+        c = may_pump_command(answered)
+        return c if c
+        case card.match?(answered.strip)
+        when :match
+          PassedState.new(progress, answered)
+        when :wrong
+          FailedState.new(progress, answered)
+        when :typo
+          TypoState.new(progress, answered)
+        else
+          raise
+        end
+      end
+    end
+
+    class FailedStateBase < State
+      include CommandRecognizing
+
+      def pump
         diff_from_original = progress.current_card.hilighted_diff_from_original(last_answer)
         say("#{diff_from_original}", decoration_type)
-        ask("", :hit_return)
+        answered = ask("", :hit_return)
+        c = may_pump_command(answered)
+        return c if c
+        mark_progress
         QuestionState.new(progress)
       end
 
@@ -345,12 +354,15 @@ module Ankit
     end
 
     class PassedState < State
+      include CommandRecognizing
+
       def pump
-        card = progress.current_card
         progress.pass
         last_maturity = progress.last_slot.event.maturity
         say("Maturity: #{last_maturity}", :pass)
-        ask("", :hit_return)
+        answered = ask("", :hit_return)
+        c = may_pump_command(answered)
+        return c if c
         progress.over? ? BreakingState.new(progress) : QuestionState.new(progress)
       end
     end
