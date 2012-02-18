@@ -56,7 +56,7 @@ module Ankit
 
   module EventFormatting
     def format_as_score(event)
-      "verb:#{event.verb}, round:#{event.round}, maturity:#{event.maturity}"
+      "name:#{event.name}, verb:#{event.verb}, round:#{event.round}, maturity:#{event.maturity}"
     end
   end
 end

@@ -109,7 +109,7 @@ class RoundTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "5")
+    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "6")
   end
 
   def test_vanilla

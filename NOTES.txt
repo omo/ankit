@@ -118,11 +118,15 @@ Start from an as naive implentation as possible...
  + elisp directory specification
  + limit # of coming on challenge.
 
- - round computation is broken.
+ + round computation is broken.
 
 ----
 
+ - fix confusion around "round".
+ - add header.
  - Show some stats for each break.
+   - # of round.
+   - hit ratio of the round.
    - list of maturities
    - total # of challenges today/this session(pass?).
  - compaction command

@@ -8,9 +8,16 @@ module Ankit
     include CardNaming, EventFormatting
     available
 
+    define_options do |spec, options| 
+      spec.on("-l", "--last") { options[:last] = true }
+    end
+
     def execute()
-      each_event(to_card_name(args[0])) do |e|
-        runtime.stdout.print("#{format_as_score(e)}\n")
+      args.each do |a|
+        list = to_enum(:each_event, to_card_name(a)).to_a
+        (options[:last] ? list.sort_by(&:round).reverse.take(1) : list).each do |e|
+          runtime.stdout.print("#{format_as_score(e)}\n")
+        end
       end
     end
   end
