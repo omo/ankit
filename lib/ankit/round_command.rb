@@ -8,18 +8,23 @@ module Ankit
     available
 
     def execute()
-      runtime.stdout.print("#{value}\n")
+      runtime.stdout.print("#{last_round} #{next_round}\n")
     end
 
-    def value; find + 1; end
+    def next_round
+      found = Coming.existing_events(runtime).first
+      found ? found.next_round : 0
+    end
 
-    def find
-      found = Coming.existing_events(runtime).min_by(&:round)
-      found ? found.round : -1
+    def last_round
+      found = Coming.existing_events(runtime).max_by(&:round)
+      found ? found.round : 0
     end
   end
 
   module RoundCounting
-    def round; @round ||= RoundCommand.new(self.runtime).value; end
+    def last_round; @last_round ||= RoundCommand.new(self.runtime).last_round; end
+    def next_round; @next_round ||= RoundCommand.new(self.runtime).next_round; end
+    def latest_round; last_round + 1; end
   end
 end

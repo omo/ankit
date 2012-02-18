@@ -53,7 +53,7 @@ module Ankit
     end
 
     def name_to_vanilla_events
-      vanilla_round = round - 1 # forces to come upfront.
+      vanilla_round = last_round
       ListCommand.new(runtime).to_enum(:each_card_name).reduce({}) do |a, name|
         a[name] = Event.for_card(name, "vanilla", Envelope.fresh(vanilla_round))
         a
