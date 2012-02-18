@@ -9,7 +9,7 @@ class ProgressTest < Test::Unit::TestCase
   include Challenge
 
   def make_target(runtime)
-    Progress.new(runtime, [Slot.new("path1"), Slot.new("path2"), Slot.new("path3")])
+    Progress.new(Session.new(runtime), [Slot.new("path1"), Slot.new("path2"), Slot.new("path3")])
   end
 
   def first_slot_event_of(progress)
@@ -26,6 +26,8 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal(target.slots[0].event, fetched_event)
       assert_equal(0, fetched_event.maturity)
       assert(runtime.printed_line.empty?)
+      assert_equal(1, target.nfailed)
+      assert_equal(0, target.npassed)
     end
   end
 
@@ -39,6 +41,25 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal(target.slots[0].event, fetched_event)
       assert_equal(1, fetched_event.maturity)
       assert(runtime.printed_line.empty?)
+
+      assert_equal(0, target.nfailed)
+      assert_equal(1, target.npassed)
+    end
+  end
+
+  def test_fail_then_pass
+    with_runtime_on_temp_repo do |runtime|
+      target = make_target(runtime)
+      target.fail
+      target.pass
+      fetched_event = first_slot_event_of(target)
+      assert_equal(target.index, 1)
+      assert_equal(target.slots[0].rating, :failed)
+      assert_equal(target.slots[0].event, fetched_event)
+      assert_equal(0, fetched_event.maturity)
+
+      assert_equal(1, target.nfailed)
+      assert_equal(0, target.npassed)
     end
   end
 
@@ -54,19 +75,6 @@ class ProgressTest < Test::Unit::TestCase
     end
   end
 
-  def test_fail_then_pass
-    with_runtime_on_temp_repo do |runtime|
-      target = make_target(runtime)
-      target.fail
-      target.pass
-      fetched_event = first_slot_event_of(target)
-      assert_equal(target.index, 1)
-      assert_equal(target.slots[0].rating, :failed)
-      assert_equal(target.slots[0].event, fetched_event)
-      assert_equal(0, fetched_event.maturity)
-    end
-  end
-
   def test_indicator
     with_runtime_on_temp_repo do |runtime|
       target = make_target(runtime)
@@ -77,6 +85,13 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal("o*-", target.indicator)
       target.fail
       assert_equal("ox-", target.indicator)
+    end
+  end
+
+  def test_round_delta
+    with_runtime_on_temp_repo do |runtime|
+      target = make_target(runtime).pass.pass.pass
+      assert_equal(1, target.round_delta)
     end
   end
 

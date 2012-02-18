@@ -65,16 +65,29 @@ module Ankit
   end
 
   module Challenge
-    class Slot < Struct.new(:path, :rating, :event); end
+    class Slot < Struct.new(:path, :rating, :event)
+      def maturity; self.event ? self.event.maturity : 0; end
+    end
+
+    class Session < Struct.new(:runtime, :npassed, :nfailed, :mature_names)
+      def self.make(runtime)
+        self.new(runtime, 0, 0, [])
+      end
+
+      def summary_text
+        total = self.npassed + self.nfailed
+        return "" if 0 == total
+        "#{self.npassed}/#{total} = #{self.npassed.to_f/total.to_f}, #mature: #{mature_names.size}"
+      end
+    end
 
     class Progress
       include CardHappening, CardNaming, RoundCounting
 
-      attr_reader :runtime, :slots, :index, :npassed, :nfailed, :this_round
+      attr_reader :session, :slots, :index, :this_round
 
-      def initialize(runtime, slots)
-        @runtime, @slots, @index = runtime, slots, 0
-        @npassed = @nfailed = 0
+      def initialize(session, slots)
+        @session, @slots, @index = session, slots, 0
         @this_round = latest_round
       end
 
@@ -83,11 +96,18 @@ module Ankit
         Card.parse(open(current_path, "r") { |f| f.read })
       end
 
+      def round_delta
+        latest_round - this_round
+      end
+
+      def runtime; @session.runtime; end
       def last_slot; @slots[@index-1]; end
       def current_slot; @slots[@index]; end
       def current_path; current_slot.path; end
       def size; @slots.size; end
       def over?; @slots.size <= @index; end
+      def npassed; @slots.count { |c| c.rating == :passed }; end
+      def nfailed; @slots.count { |c| c.rating == :failed }; end
 
       def already_failed?; current_slot.rating == :failed; end
 
@@ -103,7 +123,6 @@ module Ankit
           last_slot.event = make_happen(FailCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
         end
         
-        @nfailed += 1
         self
       end
 
@@ -114,7 +133,6 @@ module Ankit
           last_slot.event = make_happen(PassCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
         end
 
-        @npassed += 1
         @index += 1
         self
       end
@@ -140,6 +158,14 @@ module Ankit
           end
         end.join
       end
+
+      def update_session
+        session.npassed += npassed
+        session.nfailed += nfailed
+        session.mature_names = (session.mature_names + slots.select{ |s| 1 < s.maturity }.map(&:path)).uniq
+      end
+
+      def maturities; slots.map(&:maturity);  end
     end
 
     class State
@@ -148,7 +174,7 @@ module Ankit
       def initialize(progress, last_answer=nil)
         @progress, @last_answer = progress, last_answer
       end
-
+      
       def keep_pumping_until(&block)
         state = self
         until block.call(state)
@@ -166,9 +192,19 @@ module Ankit
         line.say(message_for(msg, type))
       end
 
+      def show_summary_status
+        line.say("Round #{progress.this_round}: #{progress.styled_indicator}")
+      end
+
+      def show_breaking_status
+        show_summary_status
+        line.say("Maturity: #{progress.maturities.map(&:to_s).join(',')}")
+        line.say("Session: #{progress.session.summary_text}")
+        line.say("next round will be +#{progress.round_delta}")
+      end
+
       def show_header
-        header = "Round #{progress.this_round}, #{progress.styled_indicator}"
-        line.say(header)
+        show_summary_status
         line.say("\n")
       end
 
@@ -183,6 +219,7 @@ module Ankit
       def over?; false; end
       def runtime; progress.runtime; end
       def line; progress.runtime.line; end
+      def session; progress.session; end
 
       private
       
@@ -225,7 +262,6 @@ module Ankit
         card = progress.current_card
         say("#{card.translation}")
         say("#{card.hidden_original}", :cont)
-        say("\n", :cont)
         answered = ask().strip
         m = /^\/(\w+)/.match(answered) 
         if m
@@ -268,6 +304,10 @@ module Ankit
 
     class BreakingState < State
       def pump
+        progress.update_session
+        clear_screen
+        show_breaking_status
+
         case ask_more
         when :yes
           initial_state
@@ -302,7 +342,7 @@ module Ankit
     module Approaching
       def initial_state
         slots = Coming.coming_paths(self.runtime).take(self.coming_limit).map { |path| Slot.new(path, nil) }
-        QuestionState.new(Progress.new(self.runtime, slots))
+        QuestionState.new(Progress.new(self.session, slots))
       end
     end
 
@@ -319,6 +359,8 @@ module Ankit
     end
 
     DEFAULT_COUNT = 5
+
+    def session; @session ||= Challenge::Session.make(runtime); end
 
     def execute()
       Signal.trap("INT") do
