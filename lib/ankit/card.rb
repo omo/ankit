@@ -2,6 +2,7 @@
 
 module Ankit
   class Card
+   
     attr_reader :deckname, :source
 
     def self.parse(text)
@@ -30,12 +31,31 @@ module Ankit
       original.gsub(/\W+/, "-").gsub(/^\-/, "").gsub(/\-$/, "").downcase
     end
 
-    def plain_original; original.gsub(/\[(.*?)\]/) { |t| $1 }; end
-
-    # FIXME: Needs tests.
     def match?(text)
-      plain_original == text
+      return :match if plain_original == text
+      return :wrong if text.empty?
+
+      hiddens = decorated_original { |m| "*"*m[1].size }.chars.to_a
+      inside_essentials = to_enum(:diff_from_original, text).find do |ch|
+        ch.action != "=" && hiddens[ch.old_position] == "*"
+      end
+
+      inside_essentials ? :wrong : :typo
     end
+
+    def diff_from_original(text, &block)
+      changes = Diff::LCS.sdiff(text, plain_original)
+      changes.map do |ch|
+        block.call(ch)
+      end.join("")
+    end
+
+    def decorated_original(&block)
+      decoed = original.gsub(/\[(.*?)\]/) { |t| block.call(Regexp.last_match) }
+      decoed != original ? decoed : decoed.gsub(/^(.*)$/) { |t| block.call(Regexp.last_match) }
+    end
+
+    def plain_original; decorated_original { |m| m[1] }; end
   end
 
   module CardNaming

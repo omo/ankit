@@ -18,6 +18,8 @@ module Ankit
         text.gsub(/\w/, "*")
       when :failed
         HighLine.color(text, HighLine::RED_STYLE)
+      when :warn
+        HighLine.color(text, HighLine::YELLOW_STYLE)
       when :passed
         HighLine.color(text, HighLine::GREEN_STYLE)
       when :pending
@@ -34,7 +36,11 @@ module Ankit
     def initialize(text); @text = text; end
 
     def decorated(type)
-      decorated = @text.gsub(/\[(.*?)\]/) { |t| self.class.styled_text($1, type) }
+      raise
+      decorated = @text.gsub(/\[(.*?)\]/) { |t|
+        p Regexp::last_match.offset(0)
+        self.class.styled_text($1, type)
+      }
       decorated != @text ? decorated : self.class.styled_text(@text, type)
     end
 
@@ -60,8 +66,23 @@ module Ankit
   end
 
   class Card
-    def hidden_original; StylableText.new(self.original).decorated(:hidden); end
-    def diff_from_original(text) StylableText.new(self.plain_original).diff(text); end
+    def hidden_original; decorated_original{ |m| StylableText.styled_text(m[1], :hidden) }; end
+    def hilighted_diff_from_original(text)
+      diff_from_original(text) do |ch|
+        case ch.action
+        when "="
+          ch.new_element
+        when "!"
+          StylableText.styled_text(ch.new_element, :plus)
+        when "-"
+          StylableText.styled_text(ch.old_element, :minus)
+        when "+"
+          StylableText.styled_text(ch.new_element, :plus)
+        else
+          raise
+        end
+      end
+    end
   end
 
   module Challenge
@@ -151,9 +172,9 @@ module Ankit
       def styled_indicator
         indicator.to_enum(:each_char).map do |i|
           case i
-          when "x"; StylableText.new(i).decorated(:failed)
-          when "o"; StylableText.new(i).decorated(:passed)
-          when "-"; StylableText.new(i).decorated(:pending)
+          when "x"; StylableText.styled_text(i, :failed)
+          when "o"; StylableText.styled_text(i, :passed)
+          when "-"; StylableText.styled_text(i, :pending)
           else; i
           end
         end.join
@@ -228,9 +249,11 @@ module Ankit
         when :progress
           "      "
         when :fail
-          StylableText.new("FAIL: ").decorated(:failed)
+          StylableText.styled_text("FAIL: ", :failed)
+        when :typo
+          StylableText.styled_text("TYPO: ", :warn)
         when :pass
-          StylableText.new("PASS: ").decorated(:passed)
+          StylableText.styled_text("PASS: ", :passed)
         when :ask
           "    > "
         when :hit_return
@@ -267,7 +290,16 @@ module Ankit
         if m
           pump_command($1)
         else
-          (card.match?(answered.strip) ? PassedState : FailedState).new(progress, answered)
+          case card.match?(answered.strip)
+          when :match
+            PassedState.new(progress, answered)
+          when :wrong
+            FailedState.new(progress, answered)
+          when :typo
+            TypoState.new(progress, answered)
+          else
+            raise
+          end
         end
       end
 
@@ -281,13 +313,34 @@ module Ankit
       end
     end
 
-    class FailedState < State
+    class FailedStateBase < State
       def pump
-        progress.fail
-        diff_from_original = progress.current_card.diff_from_original(last_answer)
-        say("#{diff_from_original}", :fail)
+        mark_progress
+        diff_from_original = progress.current_card.hilighted_diff_from_original(last_answer)
+        say("#{diff_from_original}", decoration_type)
         ask("", :hit_return)
         QuestionState.new(progress)
+      end
+
+    end
+
+    class FailedState < FailedStateBase
+      def mark_progress
+        progress.fail
+      end
+
+      def decoration_type
+        :fail
+      end
+    end
+
+    class TypoState < FailedStateBase
+      def mark_progress
+        
+      end
+
+      def decoration_type
+        :typo
       end
     end
 

@@ -277,6 +277,7 @@ class ChallengeTest < Test::Unit::TestCase
   FIRST_CORRECT_ANSWER = "Vanilla, Please?"
   SECOND_CORRECT_ANSWER = "Hello"
   FIRST_WRONG_ANSWER = "Doesn't Match"
+  FIRST_TYPO_ANSWER = "Vanilla, Please!"  
 
   def hit_return_pump(state)
     state.progress.runtime.line = HighLine.new
@@ -308,6 +309,23 @@ class ChallengeTest < Test::Unit::TestCase
       assert_instance_of(Challenge::QuestionState, actual_next)
       assert_equal(actual_next.progress.npassed, 0)
       assert_equal(actual_next.progress.nfailed, 1)
+    end
+  end
+
+  def test_question_to_typo
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual_next = enter_text_pump(actual, FIRST_TYPO_ANSWER)
+      assert_instance_of(Challenge::TypoState, actual_next)
+      actual_next = hit_return_pump(actual_next)
+      assert_instance_of(Challenge::QuestionState, actual_next)
+      assert_equal(actual_next.progress.npassed, 0)
+      assert_equal(actual_next.progress.nfailed, 0)
+      actual_next = enter_text_pump(actual_next, FIRST_CORRECT_ANSWER)
+      assert_instance_of(Challenge::PassedState, actual_next)
+      hit_return_pump(actual_next)
+      assert_equal(actual_next.progress.npassed, 1)
+      assert_equal(actual_next.progress.nfailed, 0)
     end
   end
 
@@ -374,14 +392,10 @@ class StylableTextTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    assert_equal("Hello, \e[31mWorld\e[0m!", 
-                 StylableText.new("Hello, [World]!").decorated(:failed))
-    assert_equal("\e[31mHello, World!\e[0m", 
-                 StylableText.new("Hello, World!").decorated(:failed))
     assert_equal("Hello, *****!", 
-                 StylableText.new("Hello, [World]!").decorated(:hidden))
+                 Card.new(o: "Hello, [World]!").hidden_original)
     assert_equal("*****, *****!", 
-                 StylableText.new("[Hello, World]!").decorated(:hidden))
+                 Card.new(o: "Hello, World!").hidden_original)
   end
 
   def test_diff

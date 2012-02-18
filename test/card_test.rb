@@ -65,14 +65,28 @@ T: Konichiwa, Genki?
     # XXX: will tackle later
   end
 
+  def test_plain_original
+    assert_equal(Card.new(o: "Hello").plain_original, "Hello")
+    assert_equal(Card.new(o: "Hello, [World].").plain_original, "Hello, World.")
+  end
+
   def test_match_hello
     target = Card.new(o: "Hello")
     assert( target.match?("Hello"))
-    assert(!target.match?("Bye"))
+    assert_equal(:wrong, target.match?("Bye"))
   end
 
-  def test_match_gracket
+  def test_match_bracket
     target = Card.new(o: "Hello, [World].")
-    assert( target.match?("Hello, World."))
+    assert_equal(:match, target.match?("Hello, World."))
+  end
+
+  def test_match_typo
+    target = Card.new(o: "Hello, [World].")
+    assert_equal(:typo, target.match?("Hallo, World."))
+    assert_equal(:typo, target.match?("Halo, World."))
+    assert_equal(:typo, target.match?("Hello, World!"))
+    assert_equal(:typo, target.match?("World!"))
+    assert_equal(:wrong, target.match?(""))
   end
 end
