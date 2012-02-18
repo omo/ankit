@@ -26,5 +26,6 @@ module Ankit
     def last_round; @last_round ||= RoundCommand.new(self.runtime).last_round; end
     def next_round; @next_round ||= RoundCommand.new(self.runtime).next_round; end
     def latest_round; last_round + 1; end
+    def round_proceeded; @last_round = @next_round = nil; end
   end
 end

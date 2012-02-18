@@ -9,7 +9,7 @@ class ProgressTest < Test::Unit::TestCase
   include Challenge
 
   def make_target(runtime)
-    Progress.new(runtime, [Slot.new("path1"), Slot.new("path2")])
+    Progress.new(runtime, [Slot.new("path1"), Slot.new("path2"), Slot.new("path3")])
   end
 
   def first_slot_event_of(progress)
@@ -42,6 +42,18 @@ class ProgressTest < Test::Unit::TestCase
     end
   end
 
+  def test_round_during_progress
+    with_runtime_on_temp_repo do |runtime|
+      target = make_target(runtime)
+      target.pass
+      e1 = EventTraversing.find_latest_event_named(runtime, "path1")
+      target.pass
+      e2 = EventTraversing.find_latest_event_named(runtime, "path2")
+      assert_equal(target.this_round, e1.round)
+      assert_equal(target.this_round, e2.round)
+    end
+  end
+
   def test_fail_then_pass
     with_runtime_on_temp_repo do |runtime|
       target = make_target(runtime)
@@ -54,5 +66,19 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal(0, fetched_event.maturity)
     end
   end
+
+  def test_indicator
+    with_runtime_on_temp_repo do |runtime|
+      target = make_target(runtime)
+      assert_equal("---", target.indicator)
+      target.pass
+      assert_equal("o--", target.indicator)
+      target.attack
+      assert_equal("o*-", target.indicator)
+      target.fail
+      assert_equal("ox-", target.indicator)
+    end
+  end
+
 end
 

@@ -23,7 +23,12 @@ module Ankit
     end
 
     def self.find_latest_event_for(runtime, path)
-      EventTraversingCommand.new(runtime).to_enum(:each_event, to_card_name(path)).sort_by { |x| x.round }[-1]
+      #EventTraversingCommand.new(runtime).to_enum(:each_event, to_card_name(path)).sort_by { |x| x.round }[-1]
+      find_latest_event_named(runtime, to_card_name(path))
+    end
+
+    def self.find_latest_event_named(runtime, name)
+      EventTraversingCommand.new(runtime).to_enum(:each_event, name).sort_by { |x| x.round }[-1]
     end
 
     def latest_event_for(path) EventTraversing.find_latest_event_for(self.runtime, path); end

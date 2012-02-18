@@ -20,6 +20,8 @@ module Ankit
         HighLine.color(text, HighLine::RED_STYLE)
       when :passed
         HighLine.color(text, HighLine::GREEN_STYLE)
+      when :pending
+        HighLine.color(text, HighLine::DARK)
       when :plus
         HighLine.color(text, HighLine::RED_STYLE)
       when :minus
@@ -66,13 +68,14 @@ module Ankit
     class Slot < Struct.new(:path, :rating, :event); end
 
     class Progress
-      include CardHappening, CardNaming
+      include CardHappening, CardNaming, RoundCounting
 
-      attr_reader :runtime, :slots, :index, :npassed, :nfailed
+      attr_reader :runtime, :slots, :index, :npassed, :nfailed, :this_round
 
       def initialize(runtime, slots)
         @runtime, @slots, @index = runtime, slots, 0
         @npassed = @nfailed = 0
+        @this_round = latest_round
       end
 
       def current_card
@@ -86,25 +89,56 @@ module Ankit
       def size; @slots.size; end
       def over?; @slots.size <= @index; end
 
+      def already_failed?; current_slot.rating == :failed; end
+
+      def attack
+        current_slot.rating = :attacking unless current_slot.rating
+        self
+      end
+        
       def fail
-        unless current_slot.rating
+        unless already_failed?
           last_slot = current_slot
           last_slot.rating = :failed
-          last_slot.event = make_happen(FailCommand::EVENT_HAPPENING, to_card_name(current_path))
+          last_slot.event = make_happen(FailCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
         end
         
         @nfailed += 1
+        self
       end
 
       def pass
-        unless current_slot.rating
+        unless already_failed?
           last_slot = current_slot
           last_slot.rating = :passed
-          last_slot.event = make_happen(PassCommand::EVENT_HAPPENING, to_card_name(current_path))
+          last_slot.event = make_happen(PassCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
         end
 
         @npassed += 1
         @index += 1
+        self
+      end
+
+      def indicator
+        @slots.inject("") do |a, i|
+          a += case i.rating
+               when :failed; "x"
+               when :passed; "o"
+               when :attacking; "*"
+               else;         "-"
+               end
+        end
+      end
+
+      def styled_indicator
+        indicator.to_enum(:each_char).map do |i|
+          case i
+          when "x"; StylableText.new(i).decorated(:failed)
+          when "o"; StylableText.new(i).decorated(:passed)
+          when "-"; StylableText.new(i).decorated(:pending)
+          else; i
+          end
+        end.join
       end
     end
 
@@ -132,6 +166,12 @@ module Ankit
         line.say(message_for(msg, type))
       end
 
+      def show_header
+        header = "Round #{progress.this_round}, #{progress.styled_indicator}"
+        line.say(header)
+        line.say("\n")
+      end
+
       def show_and_ask_enter(msg, type)
         line.ask(message_for(msg, type) + " ") { |q| q.readline = true }
       end
@@ -149,7 +189,7 @@ module Ankit
       def message_for(body, type)
         case type
         when :progress
-          " #{progress.index}/#{progress.size}: "
+          "      "
         when :fail
           StylableText.new("FAIL: ").decorated(:failed)
         when :pass
@@ -179,10 +219,13 @@ module Ankit
 
     class QuestionState < State
       def pump
+        progress.attack
         clear_screen
+        show_header
         card = progress.current_card
         say("#{card.translation}")
         say("#{card.hidden_original}", :cont)
+        say("\n", :cont)
         answered = ask().strip
         m = /^\/(\w+)/.match(answered) 
         if m

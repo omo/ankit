@@ -122,13 +122,14 @@ Start from an as naive implentation as possible...
 
 ----
 
- - fix confusion around "round".
- - add header.
+ + fix confusion around "round".
+ + add header for each question.
  - Show some stats for each break.
    - # of round.
    - hit ratio of the round.
    - list of maturities
    - total # of challenges today/this session(pass?).
+ - allow editing during the question.
  - compaction command
 
  - skip "pass" just before break
