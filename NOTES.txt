@@ -117,7 +117,6 @@ Start from an as naive implentation as possible...
  + challenge: show maturity after pass.
  + elisp directory specification
  + limit # of coming on challenge.
-
  + round computation is broken.
 
 ----
@@ -130,13 +129,13 @@ Start from an as naive implentation as possible...
    + list of maturities
    + total # of challenges today/this session(pass?).
  + typo detection.
- - allow editing during the question.
+ + allow editing during the question.
+ . in-place editing command.
+ + gem packaging
+ - a way to skip fail. (retry slash command?)
  - compaction command
-
  - skip "pass" just before break
- - a way to skip fail.
- - in-place editing.
-
+ 
  > untra
    - exclude untra from challenge.
    - cli: list non-translated cards
