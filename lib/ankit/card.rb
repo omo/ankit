@@ -1,4 +1,5 @@
 
+require 'diff/lcs'
 
 module Ankit
   class Card
@@ -33,7 +34,7 @@ module Ankit
 
     def match?(text)
       return :match if plain_original == text
-      return :wrong if text.empty?
+      return :wrong if 1 < (text.length - plain_original.length).abs
 
       hiddens = decorated_original { |m| "*"*m[1].size }.chars.to_a
       inside_essentials = to_enum(:diff_from_original, text).find do |ch|

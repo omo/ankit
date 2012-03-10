@@ -86,7 +86,8 @@ T: Konichiwa, Genki?
     assert_equal(:typo, target.match?("Hallo, World."))
     assert_equal(:typo, target.match?("Halo, World."))
     assert_equal(:typo, target.match?("Hello, World!"))
-    assert_equal(:typo, target.match?("World!"))
+    assert_equal(:wrong, target.match?("World."))
+    assert_equal(:wrong, target.match?("Hello,"))
     assert_equal(:wrong, target.match?(""))
   end
 end
