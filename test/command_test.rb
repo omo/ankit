@@ -323,7 +323,7 @@ class ChallengeTest < Test::Unit::TestCase
       assert_equal(actual_next.progress.nfailed, 0)
       actual_next = enter_text_pump(actual_next, FIRST_CORRECT_ANSWER)
       assert_instance_of(Challenge::PassedState, actual_next)
-      hit_return_pump(actual_next)
+      actual_next.pump
       assert_equal(actual_next.progress.npassed, 1)
       assert_equal(actual_next.progress.nfailed, 0)
     end
@@ -334,7 +334,7 @@ class ChallengeTest < Test::Unit::TestCase
       actual = ChallengeCommand.new(runtime).initial_state
       actual_next = enter_text_pump(actual, FIRST_CORRECT_ANSWER)
       assert_instance_of(Challenge::PassedState, actual_next)
-      actual_next = hit_return_pump(actual_next)
+      actual_next = actual_next.pump
       assert_instance_of(Challenge::QuestionState, actual_next)
       assert_equal(actual_next.progress.npassed, 1)
       assert_equal(actual_next.progress.nfailed, 0)
@@ -344,11 +344,13 @@ class ChallengeTest < Test::Unit::TestCase
   def pass_two(state)
     state = enter_text_pump(state, FIRST_CORRECT_ANSWER)
     assert_instance_of(Challenge::PassedState, state)
-    state = hit_return_pump(state)
+    state = state.pump
     assert_instance_of(Challenge::QuestionState, state)
     state = enter_text_pump(state, SECOND_CORRECT_ANSWER)
     assert_instance_of(Challenge::PassedState, state)
-    hit_return_pump(state)
+    state = state.pump
+    assert_equal(state.progress.npassed, 2)
+    state
   end
 
   def test_to_breaking

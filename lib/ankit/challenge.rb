@@ -356,10 +356,10 @@ module Ankit
       def pump
         progress.pass
         last_maturity = progress.last_slot.event.maturity
-        say("Maturity: #{last_maturity}", :pass)
-        answered = ask("", :hit_return)
-        c = may_pump_command(answered)
-        return c if c
+        #say("Maturity: #{last_maturity}", :pass)
+        #answered = ask("", :hit_return)
+        #c = may_pump_command(answered)
+        #return c if c
         progress.over? ? BreakingState.new(progress) : QuestionState.new(progress)
       end
     end
