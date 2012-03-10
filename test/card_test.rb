@@ -90,4 +90,10 @@ T: Konichiwa, Genki?
     assert_equal(:wrong, target.match?("Hello,"))
     assert_equal(:wrong, target.match?(""))
   end
+
+  def test_diff
+    Card.new(o:"hello").hilighted_diff_from_original("helo") {}
+    Card.new(o:"helo").hilighted_diff_from_original("hello") {}
+    Card.new(o:"helxo").hilighted_diff_from_original("hello") {}
+  end
 end

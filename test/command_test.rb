@@ -411,10 +411,4 @@ class StylableTextTest < Test::Unit::TestCase
     assert_equal("*****, *****!", 
                  Card.new(o: "Hello, World!").hidden_original)
   end
-
-  def test_diff
-    StylableText.new("hello").diff("helo")
-    StylableText.new("helo").diff("hello")
-    StylableText.new("helxo").diff("hello")
-  end
 end

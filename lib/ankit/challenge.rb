@@ -41,25 +41,6 @@ module Ankit
       decorated != @text ? decorated : self.class.styled_text(@text, type)
     end
 
-    def diff(orig)
-      return @text if @text.empty?
-
-      changes = Diff::LCS.sdiff(orig, @text)
-      changes.map do |ch|
-        case ch.action
-        when "="
-          ch.new_element
-        when "!"
-          self.class.styled_text(ch.new_element, :plus)
-        when "-"
-          self.class.styled_text(ch.old_element, :minus)
-        when "+"
-          self.class.styled_text(ch.new_element, :plus)
-        else
-          raise
-        end
-      end.join("")
-    end
   end
 
   class Card
