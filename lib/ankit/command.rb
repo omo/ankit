@@ -11,10 +11,13 @@ module Ankit
       COMMANDS.push(self)
     end
 
+    def self.command_name
+      /(.*)\:\:(\w+)Command/.match(self.name).to_a[-1].downcase
+    end
+
     def self.by_name
       COMMANDS.inject({}) do |a, cls|
-        name = /(.*)\:\:(\w+)Command/.match(cls.name).to_a[-1].downcase
-        a[name] = cls
+        a[cls.command_name] = cls
         a
       end
     end

@@ -102,7 +102,7 @@ module Ankit
       splitted = self.split_subcommand(args)
       r = self.setup(splitted[:global])
       if splitted[:subcommand].empty?
-        # TODO: show help
+        r.dispatch([ChallengeCommand.command_name])
       else
         r.dispatch(splitted[:subcommand])
       end
