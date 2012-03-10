@@ -281,8 +281,10 @@ module Ankit
 
       def pump_command(command)
         case command
-        when "edit"
+        when "e", "edit"
           EditState.new(progress)
+        when "z", "zero"
+          QuestionState.new(progress)
         else
           raise
         end

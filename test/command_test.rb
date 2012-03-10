@@ -312,6 +312,18 @@ class ChallengeTest < Test::Unit::TestCase
     end
   end
 
+  def test_question_to_fail_but_zero_it
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      actual_next = enter_text_pump(actual, FIRST_WRONG_ANSWER)
+      assert_instance_of(Challenge::FailedState, actual_next)
+      actual_next = enter_text_pump(actual_next, "/zero")
+      assert_instance_of(Challenge::QuestionState, actual_next)
+      assert_equal(actual_next.progress.npassed, 0)
+      assert_equal(actual_next.progress.nfailed, 0)
+    end
+  end
+
   def test_question_to_typo
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime).initial_state
