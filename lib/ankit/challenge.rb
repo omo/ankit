@@ -21,10 +21,10 @@ module Ankit
         HighLine.color(text, HighLine::GREEN_STYLE)
       when :pending
         HighLine.color(text, HighLine::DARK)
-      when :plus
+      when :correct
+        HighLine.color(text, HighLine::GREEN_STYLE)
+      when :wrong
         HighLine.color(text, HighLine::RED_STYLE)
-      when :minus
-        HighLine.color(text, HighLine::REVERSE_STYLE)
       else
         raise
       end
@@ -45,17 +45,30 @@ module Ankit
 
   class Card
     def hidden_original; decorated_original{ |m| StylableText.styled_text(m[1], :hidden) }; end
-    def hilighted_diff_from_original(text)
-      diff_from_original(text) do |ch|
+    def corrected_original_over(wrong)
+      diff_from_original(wrong) do |ch|
         case ch.action
         when "="
           ch.new_element
-        when "!"
-          StylableText.styled_text(ch.new_element, :plus)
+        when "!", "+"
+          StylableText.styled_text(ch.new_element, :correct)
         when "-"
-          StylableText.styled_text(ch.old_element, :minus)
+          ""
+        else
+          raise
+        end
+      end
+    end
+
+    def hilight_against_original(wrong)
+      diff_from_original(wrong) do |ch|
+        case ch.action
+        when "="
+          ch.old_element
+        when "!", "-"
+          StylableText.styled_text(ch.old_element, :wrong)
         when "+"
-          StylableText.styled_text(ch.new_element, :plus)
+          ""
         else
           raise
         end
@@ -181,10 +194,15 @@ module Ankit
         end
       end
 
+      # http://7ujm.net/etc/esc.html
+      def erase_last
+        runtime.stdout.print("\033[1A")
+      end
+
       def clear_screen
         runtime.stdout.print("\033[2J")
         h = HighLine::SystemExtensions.terminal_size[0]
-        runtime.stdout.print("\033[#{h}0A")
+        runtime.stdout.print("\033[#{h}A")
       end
 
       def say(msg, type=:progress)
@@ -302,8 +320,11 @@ module Ankit
       include CommandRecognizing
 
       def pump
-        diff_from_original = progress.current_card.hilighted_diff_from_original(last_answer)
-        say("#{diff_from_original}", decoration_type)
+        original = progress.current_card.corrected_original_over(last_answer)
+        typed = progress.current_card.hilight_against_original(last_answer)
+        erase_last
+        say("#{typed}", :ask)
+        say("#{original}", decoration_type)
         answered = ask("", :hit_return)
         c = may_pump_command(answered)
         return c if c

@@ -92,8 +92,11 @@ T: Konichiwa, Genki?
   end
 
   def test_diff
-    Card.new(o:"hello").hilighted_diff_from_original("helo") {}
-    Card.new(o:"helo").hilighted_diff_from_original("hello") {}
-    Card.new(o:"helxo").hilighted_diff_from_original("hello") {}
+    Card.new(o:"hello").corrected_original_over("helo") {}
+    Card.new(o:"helo").corrected_original_over("hello") {}
+    Card.new(o:"helxo").corrected_original_over("hello") {}
+    Card.new(o:"hello").hilight_against_original("helo") {}
+    Card.new(o:"helo").hilight_against_original("hello") {}
+    Card.new(o:"helxo").hilight_against_original("hello") {}
   end
 end
