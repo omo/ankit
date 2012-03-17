@@ -273,7 +273,7 @@ module Ankit
       end
     end
 
-    module CommandRecognizing 
+    module SlashRecognizing
       def may_pump_command(answered)
         /^\/(\w+)/.match(answered) ? pump_command($1) : nil
       end
@@ -291,7 +291,7 @@ module Ankit
     end
 
     class QuestionState < State
-      include CommandRecognizing
+      include SlashRecognizing
 
       def pump
         progress.attack
@@ -317,7 +317,7 @@ module Ankit
     end
 
     class FailedStateBase < State
-      include CommandRecognizing
+      include SlashRecognizing
 
       def pump
         original = progress.current_card.corrected_original_over(last_answer)
@@ -355,7 +355,7 @@ module Ankit
     end
 
     class PassedState < State
-      include CommandRecognizing
+      include SlashRecognizing
 
       def pump
         progress.pass
