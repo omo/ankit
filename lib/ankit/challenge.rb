@@ -355,6 +355,7 @@ module Ankit
       def pump
         original = progress.current_card.corrected_original_over(last_answer)
         typed = progress.current_card.hilight_against_original(last_answer)
+        typed = "\n" if typed.empty?
         erase_last
         say("#{typed}", :ask)
         say("#{original}", decoration_type)
