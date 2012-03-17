@@ -25,6 +25,10 @@ module Ankit
         HighLine.color(text, HighLine::GREEN_STYLE)
       when :wrong
         HighLine.color(text, HighLine::RED_STYLE)
+      when :wrong
+        HighLine.color(text, HighLine::RED_STYLE)
+      when :fyi
+        HighLine.color(text, HighLine::DARK)
       else
         raise
       end
@@ -211,6 +215,13 @@ module Ankit
 
       def show_summary_status
         line.say("Round #{progress.this_round}: #{progress.styled_indicator}")
+
+        if last_answer
+          line.say(StylableText.styled_text("last: #{last_answer}", :fyi))
+        else
+          line.say("\n")
+        end
+
       end
 
       def show_breaking_status
@@ -222,6 +233,7 @@ module Ankit
 
       def show_header
         show_summary_status
+        w = HighLine::SystemExtensions.terminal_size[1]
         line.say("\n")
       end
 
@@ -381,7 +393,7 @@ module Ankit
       def pump
         progress.pass
         last_maturity = progress.last_slot.event.maturity
-        progress.over? ? BreakingState.new(progress) : QuestionState.new(progress)
+        progress.over? ? BreakingState.new(progress) : QuestionState.new(progress, last_answer)
       end
     end
 
