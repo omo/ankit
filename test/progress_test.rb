@@ -8,8 +8,8 @@ class ProgressTest < Test::Unit::TestCase
   include Ankit::CardNaming
   include Challenge
 
-  def make_target(runtime)
-    Progress.new(Session.new(runtime), [Slot.new("path1"), Slot.new("path2"), Slot.new("path3")])
+  def make_target(runtime, sess=nil)
+    Progress.new(sess || Session.make(runtime, 5), [Slot.new("path1"), Slot.new("path2"), Slot.new("path3")])
   end
 
   def first_slot_event_of(progress)
@@ -44,6 +44,32 @@ class ProgressTest < Test::Unit::TestCase
 
       assert_equal(0, target.nfailed)
       assert_equal(1, target.npassed)
+    end
+  end
+
+  def test_passed_size
+    with_runtime_on_temp_repo do |runtime|
+      target1 = make_target(runtime)
+      session = target1.session
+
+      target1.pass
+      assert_equal(session.limit_reach, 1)
+      target1.pass
+      assert_equal(session.limit_reach, 2)
+      target1.fail
+      assert_equal(session.limit_reach, 2)
+      target1.pass
+      assert_equal(session.limit_reach, 2)
+      
+      target2 = make_target(runtime, session)
+      target2.fail
+      assert_equal(session.limit_reach, 2)
+      target2.pass
+      assert_equal(session.limit_reach, 2)
+      target2.pass
+      assert_equal(session.limit_reach, 2)
+      target2.pass
+      assert_equal(session.limit_reach, 3)
     end
   end
 

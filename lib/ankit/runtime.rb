@@ -135,6 +135,14 @@ module Ankit
       saved
     end
 
+    def clear_screen
+      w = HighLine::SystemExtensions.terminal_size[1]
+      stdout.print("\033[#{w}D")
+      stdout.print("\033[2J")
+      h = HighLine::SystemExtensions.terminal_size[0]
+      stdout.print("\033[#{h}A")
+    end
+
     def unsupress_io(saved)
       @stdin, @stdout, @stderr =  saved
     end

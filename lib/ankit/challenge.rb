@@ -39,7 +39,6 @@ module Ankit
     def decorated(type)
       raise
       decorated = @text.gsub(/\[(.*?)\]/) { |t|
-        p Regexp::last_match.offset(0)
         self.class.styled_text($1, type)
       }
       decorated != @text ? decorated : self.class.styled_text(@text, type)
@@ -82,19 +81,39 @@ module Ankit
 
   module Challenge
     class Slot < Struct.new(:path, :rating, :event)
+      BATCH_SIZE = 10
       def maturity; self.event ? self.event.maturity : 0; end
     end
 
-    class Session < Struct.new(:runtime, :npassed, :nfailed, :mature_names)
-      def self.make(runtime)
-        self.new(runtime, 0, 0, [])
+    class Session < Struct.new(:runtime, :limit, :npassed, :nfailed, :passed_events)
+      def self.make(runtime, limit)
+        self.new(runtime, limit, 0, 0, {})
       end
 
       def summary_text
-        total = self.npassed + self.nfailed
-        return "" if 0 == total
-        "#{self.npassed}/#{total} = #{self.npassed.to_f/total.to_f}, #mature: #{mature_names.size}"
+        ""
       end
+      
+      def passed_on(event)
+        self.passed_events[event.name] = event
+        self.npassed += 1
+      end
+
+      def failed_on(event)
+        self.nfailed += 1
+      end
+
+      def maturity_triple
+        return [0,0,0] if passed_events.empty?
+        mats = passed_events.values.map(&:maturity)
+        avg = mats.inject(0,:+)/mats.size
+        [mats.min, avg, mats.max]
+      end
+
+      def reached_limit?; limit <= passed_events.size; end
+      def limit_reach; passed_events.size ;end
+      def ntotal; npassed + nfailed; end
+      def hitrate; 0 < ntotal ? npassed.to_f/ntotal : 0; end
     end
 
     class Progress
@@ -137,6 +156,7 @@ module Ankit
           last_slot = current_slot
           last_slot.rating = :failed
           last_slot.event = make_happen(FailCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
+          session.failed_on(last_slot.event)
         end
         
         self
@@ -147,6 +167,7 @@ module Ankit
           last_slot = current_slot
           last_slot.rating = :passed
           last_slot.event = make_happen(PassCommand::EVENT_HAPPENING, to_card_name(current_path), this_round)
+          session.passed_on(last_slot.event)
         end
 
         @index += 1
@@ -175,12 +196,6 @@ module Ankit
         end.join
       end
 
-      def update_session
-        session.npassed += npassed
-        session.nfailed += nfailed
-        session.mature_names = (session.mature_names + slots.select{ |s| 1 < s.maturity }.map(&:path)).uniq
-      end
-
       def maturities; slots.map(&:maturity);  end
     end
 
@@ -203,37 +218,29 @@ module Ankit
         runtime.stdout.print("\033[1A")
       end
 
-      def clear_screen
-        runtime.stdout.print("\033[2J")
-        h = HighLine::SystemExtensions.terminal_size[0]
-        runtime.stdout.print("\033[#{h}A")
-      end
-
       def say(msg, type=:progress)
         line.say(message_for(msg, type))
       end
 
-      def show_summary_status
-        line.say("Round #{progress.this_round}: #{progress.styled_indicator}")
+      def show_summary_header
+        status  = ["R:#{self.session.limit_reach}/#{self.session.limit}",
+                   "H:#{self.session.hitrate}",
+                   "M:" + self.session.maturity_triple.map(&:to_s).join(",")
+                   ]
+        line.say(status.join(" "))
+      end
 
+      def show_breaking_status
+        show_summary_header
+      end
+
+      def show_header
+        show_summary_header
         if last_answer
           line.say(StylableText.styled_text("last: #{last_answer}", :fyi))
         else
           line.say("\n")
         end
-
-      end
-
-      def show_breaking_status
-        show_summary_status
-        line.say("Maturity: #{progress.maturities.map(&:to_s).join(',')}")
-        line.say("Session: #{progress.session.summary_text}")
-        line.say("next round will be +#{progress.round_delta}")
-      end
-
-      def show_header
-        show_summary_status
-        w = HighLine::SystemExtensions.terminal_size[1]
         line.say("\n")
       end
 
@@ -328,7 +335,7 @@ module Ankit
 
       def pump
         progress.attack
-        clear_screen
+        runtime.clear_screen
         show_header
         card = progress.current_card
         say("#{card.translation}")
@@ -369,23 +376,13 @@ module Ankit
     end
 
     class FailedState < FailedStateBase
-      def mark_progress
-        progress.fail
-      end
-
-      def decoration_type
-        :fail
-      end
+      def mark_progress; progress.fail; end
+      def decoration_type; :fail; end
     end
 
     class TypoState < FailedStateBase
-      def mark_progress
-        
-      end
-
-      def decoration_type
-        :typo
-      end
+      def mark_progress; end 
+      def decoration_type; :typo; end
     end
 
     class PassedState < State
@@ -394,29 +391,30 @@ module Ankit
       def pump
         progress.pass
         last_maturity = progress.last_slot.event.maturity
-        progress.over? ? BreakingState.new(progress) : QuestionState.new(progress, last_answer)
+        progress.over? ? RefillState.new(progress) : QuestionState.new(progress, last_answer)
       end
     end
 
-    class BreakingState < State
+    class RefillState < State
       def pump
-        progress.update_session
-        clear_screen
-        show_breaking_status
+        return initial_state unless session.reached_limit?
 
-        case ask_more
+        runtime.clear_screen
+        show_breaking_status
+        case ask_over
         when :yes
-          initial_state
-        when :no
+          runtime.clear_screen
           OverState.new(progress)
+        when :no
+          initial_state
         else
           # TODO: handle help
           self
         end
       end
 
-      def ask_more
-        case line.ask("More(y/n/?) ").strip
+      def ask_over
+        case line.ask("Over(Y/n/?) ").strip
         when /^y/, ""
           :yes
         when /^n/
@@ -424,10 +422,6 @@ module Ankit
         else
           :help
         end  
-      end
-
-      def coming_limit
-        progress.size
       end
     end
 
@@ -437,11 +431,13 @@ module Ankit
 
     module Approaching
       def initial_state
-        slots = Coming.coming_paths(self.runtime).take(self.coming_limit).map { |path| Slot.new(path, nil) }
+        # XXX: Care the case where |card| < limit
+        limit = [self.session.limit, Slot::BATCH_SIZE].min
+        slots = Coming.coming_paths(self.runtime).take(limit).map { |path| Slot.new(path, nil) }
         QuestionState.new(Progress.new(self.session, slots))
       end
     end
 
-    class BreakingState; include Approaching; end
+    class RefillState; include Approaching; end
   end
 end

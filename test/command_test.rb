@@ -264,8 +264,9 @@ class ChallengeTest < Test::Unit::TestCase
 
   def test_initial_state_limit_default
     runtime = make_runtime(NUMBER_REPO)
-    actual = runtime.make_command(["challenge"]).initial_state
-    assert_equal(actual.progress.size, ChallengeCommand::DEFAULT_COUNT)
+    limit = 5
+    actual = runtime.make_command(["challenge", "--limit", limit.to_s]).initial_state
+    assert_equal(actual.progress.size, limit)
   end
 
   def test_initial_state_limit_args
@@ -383,38 +384,39 @@ class ChallengeTest < Test::Unit::TestCase
     state
   end
 
-  def test_to_breaking
+  def test_to_refill
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime).initial_state
       actual_next = pass_two(actual)
-      assert_instance_of(Challenge::BreakingState, actual_next)
+      assert_instance_of(Challenge::RefillState, actual_next)
     end
   end
 
-  def test_to_breaking_to_over
+  def test_to_refill_to_over
     with_runtime_on_temp_repo do |runtime|
-      actual = ChallengeCommand.new(runtime).initial_state
+      actual = ChallengeCommand.new(runtime, ["--limit", "2"]).initial_state
       actual = pass_two(actual)
-      actual = agree_pump(actual, "n")
+      actual = agree_pump(actual, "y")
       assert_instance_of(Challenge::OverState, actual)
     end
   end
 
-  def test_to_breaking_to_more
+  def test_to_refill_to_more
     with_runtime_on_temp_repo do |runtime|
-      actual = ChallengeCommand.new(runtime).initial_state
+      actual = ChallengeCommand.new(runtime, ["--limit", "2"]).initial_state
       actual = pass_two(actual)
-      actual = agree_pump(actual, "y")
+      p actual.class
+      actual = agree_pump(actual, "n")
       assert_instance_of(Challenge::QuestionState, actual)
     end
   end
 
-  def test_to_breaking_to_more
+  def test_to_refill_to_more
     with_runtime_on_temp_repo do |runtime|
-      actual = ChallengeCommand.new(runtime).initial_state
+      actual = ChallengeCommand.new(runtime, ["--limit", "2"]).initial_state
       actual = pass_two(actual)
       actual = agree_pump(actual, "?")
-      assert_instance_of(Challenge::BreakingState, actual)
+      assert_instance_of(Challenge::RefillState, actual)
     end
   end
 end

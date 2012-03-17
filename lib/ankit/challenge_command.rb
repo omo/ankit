@@ -13,12 +13,13 @@ module Ankit
       spec.on("-l", "--limit N") { |n| options[:limit] = n.to_i }
     end
 
-    DEFAULT_COUNT = 5
+    DEFAULT_COUNT = 50
 
-    def session; @session ||= Challenge::Session.make(runtime); end
+    def session; @session ||= Challenge::Session.make(runtime, coming_limit); end
 
     def execute()
       Signal.trap("INT") do
+        runtime.clear_screen
         STDERR.print("Quit.\n")
         exit(0)
       end
@@ -26,6 +27,8 @@ module Ankit
       initial_state.keep_pumping_until { |state| state.over? }
       Signal.trap("INT", "DEFAULT")
     end
+
+    private
 
     def coming_limit
       options[:limit] or DEFAULT_COUNT
