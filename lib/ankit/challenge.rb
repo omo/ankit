@@ -274,18 +274,39 @@ module Ankit
     end
 
     module SlashRecognizing
-      def may_pump_command(answered)
-        /^\/(\w+)/.match(answered) ? pump_command($1) : nil
+      def pump_slash_or(answered, &block)
+        if /^\/(\w+)/.match(answered)
+          pump_slash($1) 
+        else
+          block.call()
+        end
       end
 
-      def pump_command(command)
+      def pump_slash(command)
         case command
         when "e", "edit"
           EditState.new(progress)
         when "z", "zero"
           QuestionState.new(progress)
         else
-          raise
+          MessageState.new(progress, "Unknown command: #{command} (Available: /edit, /zero)")
+        end
+      end
+    end
+
+    class MessageState < State
+      include SlashRecognizing
+      
+      def initialize(progress, message)
+        super(progress)
+        @message = message
+      end
+
+      def pump
+        say(@message, :fail) # XXX: should :error
+        answered = ask().strip
+        pump_slash_or(answered) do
+          pump_slash(answered)
         end
       end
     end
@@ -301,17 +322,17 @@ module Ankit
         say("#{card.translation}")
         say("#{card.hidden_original}", :cont)
         answered = ask().strip
-        c = may_pump_command(answered)
-        return c if c
-        case card.match?(answered.strip)
-        when :match
-          PassedState.new(progress, answered)
-        when :wrong
-          FailedState.new(progress, answered)
-        when :typo
-          TypoState.new(progress, answered)
-        else
-          raise
+        pump_slash_or(answered) do 
+          case card.match?(answered.strip)
+          when :match
+            PassedState.new(progress, answered)
+          when :wrong
+            FailedState.new(progress, answered)
+          when :typo
+            TypoState.new(progress, answered)
+          else
+            raise
+          end
         end
       end
     end
@@ -326,10 +347,10 @@ module Ankit
         say("#{typed}", :ask)
         say("#{original}", decoration_type)
         answered = ask("", :hit_return)
-        c = may_pump_command(answered)
-        return c if c
-        mark_progress
-        QuestionState.new(progress)
+        pump_slash_or(answered) do
+          mark_progress
+          QuestionState.new(progress)
+        end
       end
 
     end

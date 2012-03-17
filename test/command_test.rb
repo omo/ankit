@@ -300,6 +300,13 @@ class ChallengeTest < Test::Unit::TestCase
     state.pump
   end
 
+  def agree_pump(state, that)
+    state.progress.runtime.line = HighLine.new
+    state.progress.runtime.line.stubs(:say).at_least(0)
+    state.progress.runtime.line.stubs(:ask).once().returns(that)
+    state.pump
+  end
+
   def test_question_to_fail
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime).initial_state
@@ -309,6 +316,17 @@ class ChallengeTest < Test::Unit::TestCase
       assert_instance_of(Challenge::QuestionState, actual_next)
       assert_equal(actual_next.progress.npassed, 0)
       assert_equal(actual_next.progress.nfailed, 1)
+    end
+  end
+
+  def test_question_to_unknown_command
+    with_runtime_on_temp_repo do |runtime|
+      actual = ChallengeCommand.new(runtime).initial_state
+      assert_instance_of(Challenge::QuestionState, actual)
+      actual = enter_text_pump(actual, "/unknown")
+      assert_instance_of(Challenge::MessageState, actual)
+      actual = enter_text_pump(actual, "/zero")
+      assert_instance_of(Challenge::QuestionState, actual)
     end
   end
 
