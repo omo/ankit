@@ -3,7 +3,7 @@
 require 'rubygems'
 require 'rake/testtask'
 require 'rake/clean'
-require 'rake/gempackagetask'
+require 'rubygems/package_task'
 
 task :default => [:test]
 
@@ -17,7 +17,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "A CLI Flashcard."
   s.name = 'ankit'
-  s.version = "0.0.2"
+  s.version = "0.0.3"
   s.require_path = 'lib'
   s.files       = FileList["{bin,docs,lib,test}/**/*"].exclude("rdoc").to_a
   s.executables << 'ankit'
@@ -33,9 +33,10 @@ Ankit is a CLI and terminal based flashcard program to learn your new language.
 EOF
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
+Gem::PackageTask.new(spec) do |pkg|
   pkg.need_zip = true
   pkg.need_tar = true
 end
 
 CLEAN.include("pkg")
+	
