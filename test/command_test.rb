@@ -149,10 +149,19 @@ class AddTest < Test::Unit::TestCase
     end
   end
 
-  def test_hello_two_file
+  def test_hello_two_files
     with_runtime_on_temp_repo do |target|
       dst_dir = target.config.card_search_paths[1]
       assert_written(target.dispatch_then(["add", test_data_at("hope.card"), test_data_at("luck.card")]),
+                     [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
+                      File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
+    end
+  end
+
+  def test_hello_two_chunks
+    with_runtime_on_temp_repo do |target|
+      dst_dir = target.config.card_search_paths[1]
+      assert_written(target.dispatch_then(["add", test_data_at("hope-and-luck.txt")]),
                      [File.join(target.config.card_paths[0], "hope-is-the-thing-with-feathers.card"),
                       File.join(target.config.card_paths[0], "luck-is-not-chance.card")])
     end
