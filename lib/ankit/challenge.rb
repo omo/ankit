@@ -25,8 +25,6 @@ module Ankit
         HighLine.color(text, HighLine::GREEN_STYLE)
       when :wrong
         HighLine.color(text, HighLine::RED_STYLE)
-      when :wrong
-        HighLine.color(text, HighLine::RED_STYLE)
       when :fyi
         HighLine.color(text, HighLine::DARK)
       else
@@ -72,6 +70,21 @@ module Ankit
           StylableText.styled_text(ch.old_element, :wrong)
         when "+"
           ""
+        else
+          raise
+        end
+      end
+    end
+
+    def mixed_hilight_for_flash(wrong)
+      diff_from_original(wrong) do |ch|
+        case ch.action
+        when "="
+          StylableText.styled_text(ch.old_element, :fyi)
+        when "!", "-"
+          StylableText.styled_text(ch.old_element, :wrong) + StylableText.styled_text(ch.new_element, :correct)
+        when "+"
+          StylableText.styled_text(ch.new_element, :correct)
         else
           raise
         end
@@ -126,19 +139,17 @@ module Ankit
         @this_round = latest_round
       end
 
-      def current_card
-        # XXX: might be better to cache
-        Card.parse(open(current_path, "r") { |f| f.read })
-      end
-
       def round_delta
         latest_round - this_round
       end
 
       def runtime; @session.runtime; end
       def last_slot; @slots[@index-1]; end
+      def last_path; last_slot.path; end
+      def last_card; card_at(last_path); end
       def current_slot; @slots[@index]; end
       def current_path; current_slot.path; end
+      def current_card; card_at(current_path); end
       def size; @slots.size; end
       def over?; @slots.size <= @index; end
       def npassed; @slots.count { |c| c.rating == :passed }; end
@@ -197,6 +208,13 @@ module Ankit
       end
 
       def maturities; slots.map(&:maturity);  end
+
+
+      private
+      def card_at(path)
+        # XXX: might be better to cache
+        Card.parse(open(path, "r") { |f| f.read })
+      end
     end
 
     class State
@@ -232,16 +250,6 @@ module Ankit
 
       def show_breaking_status
         show_summary_header
-      end
-
-      def show_header
-        show_summary_header
-        if last_answer
-          line.say(StylableText.styled_text("last: #{last_answer}", :fyi))
-        else
-          line.say("\n")
-        end
-        line.say("\n")
       end
 
       def show_and_ask_enter(msg, type)
@@ -332,6 +340,7 @@ module Ankit
 
     class QuestionState < State
       include SlashRecognizing
+      attr_reader :flash
 
       def pump
         progress.attack
@@ -354,9 +363,26 @@ module Ankit
           end
         end
       end
+
+      def put_flash(flash)
+        @flash = flash
+        self
+      end
+
+      private
+
+      def show_header
+        show_summary_header
+        if flash
+          line.say(flash)
+        else
+          line.say("\n")
+        end
+        line.say("\n")
+      end
     end
 
-    class FailedStateBase < State
+    class FailedState < State
       include SlashRecognizing
 
       def pump
@@ -365,33 +391,35 @@ module Ankit
         typed = "\n" if typed.empty?
         erase_last
         say("#{typed}", :ask)
-        say("#{original}", decoration_type)
+        say("#{original}", :fail)
         answered = ask("", :hit_return)
         pump_slash_or(answered) do
-          mark_progress
+          progress.fail
           QuestionState.new(progress)
         end
       end
-
     end
 
-    class FailedState < FailedStateBase
-      def mark_progress; progress.fail; end
-      def decoration_type; :fail; end
-    end
-
-    class TypoState < FailedStateBase
-      def mark_progress; end 
-      def decoration_type; :typo; end
-    end
-
-    class PassedState < State
+    class PassedStateBase < State
       include SlashRecognizing
 
       def pump
         progress.pass
         last_maturity = progress.last_slot.event.maturity
-        progress.over? ? RefillState.new(progress) : QuestionState.new(progress, last_answer)
+        progress.over? ? RefillState.new(progress) : QuestionState.new(progress).put_flash(flash)
+      end
+    end
+
+    class TypoState < PassedStateBase
+      def flash
+        hilited = progress.last_card.mixed_hilight_for_flash(last_answer)
+        StylableText.styled_text("last: ", :fyi) + hilited
+      end
+    end
+
+    class PassedState < PassedStateBase
+      def flash
+        StylableText.styled_text("last: #{last_answer}", :fyi)
       end
     end
 

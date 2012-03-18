@@ -348,13 +348,8 @@ class ChallengeTest < Test::Unit::TestCase
       actual = ChallengeCommand.new(runtime).initial_state
       actual_next = enter_text_pump(actual, FIRST_TYPO_ANSWER)
       assert_instance_of(Challenge::TypoState, actual_next)
-      actual_next = hit_return_pump(actual_next)
+      actual_next = actual_next.pump
       assert_instance_of(Challenge::QuestionState, actual_next)
-      assert_equal(actual_next.progress.npassed, 0)
-      assert_equal(actual_next.progress.nfailed, 0)
-      actual_next = enter_text_pump(actual_next, FIRST_CORRECT_ANSWER)
-      assert_instance_of(Challenge::PassedState, actual_next)
-      actual_next.pump
       assert_equal(actual_next.progress.npassed, 1)
       assert_equal(actual_next.progress.nfailed, 0)
     end
