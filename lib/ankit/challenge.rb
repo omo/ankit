@@ -241,9 +241,10 @@ module Ankit
       end
 
       def show_summary_header
-        status  = ["R:#{self.session.limit_reach}/#{self.session.limit}",
+        status  = ["P:#{self.session.limit_reach}/#{self.session.limit}",
                    "H:#{self.session.hitrate}",
-                   "M:" + self.session.maturity_triple.map(&:to_s).join(",")
+                   "M:" + self.session.maturity_triple.map(&:to_s).join(","),
+                   "R:#{self.progress.this_round.to_s}"
                    ]
         line.say(status.join(" "))
       end
