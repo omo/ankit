@@ -24,6 +24,7 @@ module Ankit
     def name() @values["name"]; end
     def type() @values["type"]; end
     def maturity() @values["maturity"] || 0; end
+    def best() @values["best"] || maturity; end
     def card?() type == "card"; end
     def round() @envelope.round or 0; end
     def next_round() round + 2**maturity; end
@@ -39,11 +40,11 @@ module Ankit
     def to_json(*a) { envelope: @envelope, values: @values }.to_json(*a); end
 
     def to_passed(env)
-      Event.new(env, @values.merge({ "verb" => "passed", "maturity" => maturity + 1 }))
+      Event.new(env, Event.sweep(@values.merge({ "verb" => "passed", "maturity" => next_maturity })))
     end
 
     def to_failed(env)
-      Event.new(env, @values.merge({ "verb" => "failed", "maturity" => 0 }))
+      Event.new(env, @values.merge({ "verb" => "failed", "maturity" => 0, "best" => best }))
     end
 
     def self.for_card(name, verb, env)
@@ -52,6 +53,17 @@ module Ankit
 
     def self.from_hash(hash) Event.new(Envelope.from_hash(hash["envelope"]), hash["values"]); end
     def self.parse(text) from_hash(JSON.parse(text)); end
+
+    def self.sweep(values)
+      values.delete("best") if values.include?("best") and values["best"] <= values["maturity"]
+      values
+    end
+
+    private
+
+    def next_maturity
+      maturity + [(best - maturity)/2, 1].max
+    end
   end
 
   module EventFormatting
