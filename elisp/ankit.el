@@ -27,12 +27,20 @@
 ;;
 
 (define-derived-mode ankit-mode nil "Anki" "A mode for editing anki card buffers")
+(define-key ankit-mode-map "\C-c\C-i" 'ankit-insert-template)
 (define-key ankit-mode-map "\C-c\C-c" 'ankit-add-buffer-and-kill)
 (define-key ankit-mode-map "\C-c\C-m" 'ankit-add-buffer-and-more)
 
 ;;
 ;; Commands
 ;;
+(defun ankit-insert-template ()
+  (interactive)
+  (goto-char (point-min))
+  (insert "O: \nT: \n\n")
+  (goto-char (point-min))
+  (move-end-of-line nil))
+
 (defun ankit-clear-deck-name ()
   (interactive)
   (setq ankit-deck-name nil))
@@ -54,9 +62,7 @@
   (let ((source-buffer (generate-new-buffer "*ankit-asking-add*")))
     (switch-to-buffer source-buffer)
     (ankit-mode)
-    (insert "O: \nT: \n")
-    (goto-char 0)
-    (move-end-of-line nil)
+    (ankit-insert-template)
     ))
 
 (defun ankit-add-buffer-and-kill ()
