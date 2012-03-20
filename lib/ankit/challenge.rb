@@ -81,8 +81,10 @@ module Ankit
         case ch.action
         when "="
           StylableText.styled_text(ch.old_element, :fyi)
-        when "!", "-"
+        when "!"
           StylableText.styled_text(ch.old_element, :wrong) + StylableText.styled_text(ch.new_element, :correct)
+        when "-"
+          StylableText.styled_text(ch.old_element, :wrong)
         when "+"
           StylableText.styled_text(ch.new_element, :correct)
         else

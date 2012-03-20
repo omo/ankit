@@ -98,5 +98,6 @@ T: Konichiwa, Genki?
     Card.new(o:"hello").hilight_against_original("helo") {}
     Card.new(o:"helo").hilight_against_original("hello") {}
     Card.new(o:"helxo").hilight_against_original("hello") {}
+    Card.new(o:"A BC B").mixed_hilight_for_flash("A B CB")
   end
 end
