@@ -14,12 +14,14 @@ module Ankit
     def execute()
       validate_options
       each_text do |text|
-        text.split(/\n\n+/).each do |chunk|
+        text.split(/\n\n+/).map(&:strip).each do |chunk|
+          next if chunk.empty?
           card = Card.parse(chunk)
+          next unless card
           # TODO: gaurd ovewrite
           # TODO: guard out-of-path write
           filename = to_card_path(dest_dir, card.name)
-          File.open(filename, "w") { |f| f.write(text) }
+          File.open(filename, "w") { |f| f.write(chunk) }
           runtime.stdout.write("#{filename}\n")
         end
       end
