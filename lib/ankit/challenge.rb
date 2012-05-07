@@ -243,8 +243,9 @@ module Ankit
       end
 
       def show_summary_header
+        hitrate = sprintf("%.1f", self.session.hitrate)
         status  = ["P:#{self.session.limit_reach}/#{self.session.limit}",
-                   "H:#{self.session.hitrate}",
+                   "H:#{hitrate}",
                    "M:" + self.session.maturity_triple.map(&:to_s).join(","),
                    "R:#{self.progress.this_round.to_s}"
                    ]
