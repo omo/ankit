@@ -20,11 +20,12 @@ module Ankit
   class Config
     DEFAULT_PATH = File.expand_path("~/.ankit")
 
-    attr_writer :repo, :location, :card_paths
+    attr_writer :repo, :location, :card_paths, :challenge_limit
 
     def repo; @repo ||= File.expand_path("~/.ankit.d"); end
     def location; @location ||= `hostname`.strip; end
     def card_paths; @card_paths ||= [File.join(repo, "cards")]; end
+    def challenge_limit; @challenge_limit ||= 50; end
 
     # Computed parameters
     def primary_journal

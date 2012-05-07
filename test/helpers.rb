@@ -41,6 +41,10 @@ module Ankit
       RuntimeWithMockedIO.new(make_config(repo_dir))
     end
 
+    def make_runtime_using(config)
+      RuntimeWithMockedIO.new(config)
+    end
+
     def make_vanilla_runtime()
       make_runtime(VANILLA_REPO)
     end

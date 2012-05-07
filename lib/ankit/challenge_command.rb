@@ -13,8 +13,6 @@ module Ankit
       spec.on("-l", "--limit N") { |n| options[:limit] = n.to_i }
     end
 
-    DEFAULT_COUNT = 50
-
     def session; @session ||= Challenge::Session.make(runtime, coming_limit); end
 
     def execute()
@@ -31,7 +29,7 @@ module Ankit
     private
 
     def coming_limit
-      options[:limit] or DEFAULT_COUNT
+      options[:limit] or runtime.config.challenge_limit
     end
   end
 end

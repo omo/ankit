@@ -4,6 +4,7 @@ require 'ankit/runtime'
 require 'test/unit'
 require 'fileutils'
 require 'tmpdir'
+require 'tempfile'
 require 'mocha'
 
 class CommandTest < Test::Unit::TestCase
@@ -286,6 +287,23 @@ class ChallengeTest < Test::Unit::TestCase
     runtime = make_runtime(NUMBER_REPO)
     actual = runtime.make_command(["challenge", "--limit", "2"]).initial_state
     assert_equal(actual.progress.size, 2)
+  end
+
+  def test_initial_state_limit_rc
+    file = Tempfile.new('foo')
+    begin
+      file.write(<<EOF
+self.challenge_limit = 3
+self.repo = "#{NUMBER_REPO}"
+EOF
+                 )
+      file.close
+      runtime = make_runtime_using(Config.open(file.path))
+      actual = runtime.make_command(["challenge"]).initial_state
+      assert_equal(actual.progress.size, 3)
+    ensure
+      file.unlink
+    end
   end
 
   FIRST_CORRECT_ANSWER = "Vanilla, Please?"
