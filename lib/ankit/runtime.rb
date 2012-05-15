@@ -3,6 +3,7 @@ require 'optparse'
 require 'fileutils'
 require 'highline'
 require 'ankit/command'
+require 'ankit/errors'
 require 'ankit/add_command'
 require 'ankit/challenge_command'
 require 'ankit/coming_command'
@@ -107,6 +108,9 @@ module Ankit
       else
         r.dispatch(splitted[:subcommand])
       end
+    rescue ExpectedFatalError
+      print("Error:", $!.message, "\n")
+      exit(1)
     end
     
     def initialize(config)

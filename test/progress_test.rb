@@ -1,6 +1,7 @@
 
 require 'ankit/runtime'
 require 'test/unit'
+require 'helpers'
 
 class ProgressTest < Test::Unit::TestCase
   include Ankit
@@ -24,7 +25,7 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal(target.index, 0)
       assert_equal(target.slots[0].rating, :failed)
       assert_equal(target.slots[0].event, fetched_event)
-      assert_equal(0, fetched_event.maturity)
+      assert_equal(-1, fetched_event.maturity)
       assert(runtime.printed_line.empty?)
       assert_equal(1, target.nfailed)
       assert_equal(0, target.npassed)
@@ -82,7 +83,7 @@ class ProgressTest < Test::Unit::TestCase
       assert_equal(target.index, 1)
       assert_equal(target.slots[0].rating, :failed)
       assert_equal(target.slots[0].event, fetched_event)
-      assert_equal(0, fetched_event.maturity)
+      assert_equal(-1, fetched_event.maturity)
 
       assert_equal(1, target.nfailed)
       assert_equal(0, target.npassed)

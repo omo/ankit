@@ -35,7 +35,7 @@ class EventTest < Test::Unit::TestCase
   end
 
   def test_to_failed
-    json = JSON.parse('{"type":"card","verb":"failed","name":"hello","maturity":0,"best":1}')
+    json = JSON.parse('{"type":"card","verb":"failed","name":"hello","maturity":-1,"best":1}')
     expected = Event.new(@next_envelope, json)
     actual = @target.to_failed(@next_envelope)
     assert_equal(actual, expected)
@@ -45,6 +45,7 @@ class EventTest < Test::Unit::TestCase
   end
 
   def test_next_round
-    assert_equal(@target.next_round, 3)
+    assert_equal(@target.next_round, 2)
   end
+  
 end

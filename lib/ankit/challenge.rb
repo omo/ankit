@@ -1,3 +1,4 @@
+require 'ankit/errors'
 require 'ankit/coming_command'
 require 'ankit/fail_command'
 require 'ankit/find_command'
@@ -466,6 +467,7 @@ module Ankit
         # XXX: Care the case where |card| < limit
         limit = [self.session.limit, Slot::BATCH_SIZE].min
         slots = Coming.coming_paths(self.runtime).take(limit).map { |path| Slot.new(path, nil) }
+        raise ExpectedFatalError, "You have no card yet" if slots.empty?
         QuestionState.new(Progress.new(self.session, slots))
       end
     end

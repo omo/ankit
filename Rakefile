@@ -24,7 +24,11 @@ spec = Gem::Specification.new do |s|
   s.add_runtime_dependency "highline", [">= 1.6.11"]
   s.add_runtime_dependency "diff-lcs", [">= 1.1.3"]
   s.add_runtime_dependency "json", [">= 1.6.5"]
-  s.add_development_dependency "mocha", [">= 0.10.4"]
+# |add_development_dependency| tries to install all development dependencies recursively,
+# which I never want. So I just gave up to do it and install |mocha| as a runtime dependency instead.
+# This is kinda sad, but who cares?
+#  s.add_development_dependency "mocha", [">= 0.10.4"]
+  s.add_runtime_dependency "mocha", [">= 0.10.4"]
   s.authors     = ["Hajime Morrita"]
   s.email       = 'omo@dodgson.org'
   s.homepage    = 'https://github.com/omo/ankit'

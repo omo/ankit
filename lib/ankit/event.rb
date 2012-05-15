@@ -27,7 +27,8 @@ module Ankit
     def best() @values["best"] || maturity; end
     def card?() type == "card"; end
     def round() @envelope.round or 0; end
-    def next_round() round + 2**maturity; end
+    #def next_round() round + 2**maturity; end
+    def next_round() round + scaled_maturity; end
 
     def initialize(env, values)
       @envelope, @values = env, values
@@ -44,7 +45,7 @@ module Ankit
     end
 
     def to_failed(env)
-      Event.new(env, @values.merge({ "verb" => "failed", "maturity" => 0, "best" => best }))
+      Event.new(env, @values.merge({ "verb" => "failed", "maturity" => -1, "best" => best }))
     end
 
     def self.for_card(name, verb, env)
@@ -60,6 +61,12 @@ module Ankit
     end
 
     private
+
+    def scaled_maturity
+      return  (2**( self.maturity-1)) if 0 < maturity
+      return -(2**(-self.maturity+1)) if 0 > maturity
+      0
+    end
 
     def next_maturity
       maturity + [(best - maturity)/2, 1].max

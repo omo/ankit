@@ -5,7 +5,6 @@ require 'test/unit'
 require 'fileutils'
 require 'tmpdir'
 require 'tempfile'
-require 'mocha'
 
 class CommandTest < Test::Unit::TestCase
   include Ankit
@@ -110,7 +109,7 @@ class RoundTest < Test::Unit::TestCase
   include Ankit::TestHelper
 
   def test_hello
-    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "6 9")
+    assert_equal(make_runtime.dispatch_then(["round"]).printed_line, "6 7")
   end
 
   def test_vanilla
@@ -230,14 +229,14 @@ class FailPassTest < Test::Unit::TestCase
 
   def test_pass_vanilla
     run_test_against("pass", VANILLA) do |events|
-      assert_equal(events[0].name, VANILLA)
-      assert_equal(events[0].maturity, 1)
+      assert_equal([events[0].maturity, events[0].name], [2, JUNIOR])
+      assert_equal([events[1].maturity, events[1].name], [1, VANILLA])
     end
   end
 
   def test_pass_vintage
     run_test_against("pass", VINTAGE) do |events|
-      assert_equal(events.map(&:name), [VANILLA, JUNIOR, MIDDLE, VINTAGE])
+      assert_equal(events.map(&:name), [JUNIOR, VANILLA, MIDDLE, VINTAGE])
     end
   end
 
@@ -251,14 +250,14 @@ class FailPassTest < Test::Unit::TestCase
   def test_fail_vanilla
     run_test_against("fail", VANILLA) do |events|
       assert_equal(events[0].name, VANILLA)
-      assert_equal(events[0].maturity, 0)
+      assert_equal(events[0].maturity, -1)
     end
   end
 
   def test_fail_vintage
     run_test_against("fail", VINTAGE) do |events|
-      assert_equal(events.map(&:name), [VANILLA, VINTAGE, JUNIOR, MIDDLE])
-      assert_equal(events[0].maturity, 0)
+      assert_equal(events.map(&:name), [VINTAGE, VANILLA, JUNIOR, MIDDLE])
+      assert_equal(events[0].maturity, -1)
     end
   end
 end
@@ -287,6 +286,14 @@ class ChallengeTest < Test::Unit::TestCase
     runtime = make_runtime(NUMBER_REPO)
     actual = runtime.make_command(["challenge", "--limit", "2"]).initial_state
     assert_equal(actual.progress.size, 2)
+  end
+
+  def test_empty_repo
+    runtime = make_runtime(EMPTY_REPO)
+    command = runtime.make_command(["challenge", "--limit", "2"])
+    assert_raise(ExpectedFatalError) do
+      command.execute
+    end
   end
 
   def test_initial_state_limit_rc
@@ -431,7 +438,7 @@ EOF
     with_runtime_on_temp_repo do |runtime|
       actual = ChallengeCommand.new(runtime, ["--limit", "2"]).initial_state
       actual = pass_two(actual)
-      p actual.class
+      #p actual.class
       actual = agree_pump(actual, "n")
       assert_instance_of(Challenge::QuestionState, actual)
     end
