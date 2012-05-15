@@ -17,7 +17,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "A CLI Flashcard."
   s.name = 'ankit'
-  s.version = "0.0.6"
+  s.version = "0.0.7"
   s.require_path = 'lib'
   s.files       = FileList["{bin,docs,lib,test}/**/*"].exclude("rdoc").to_a
   s.executables << 'ankit'
