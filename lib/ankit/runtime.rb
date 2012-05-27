@@ -21,11 +21,12 @@ module Ankit
   class Config
     DEFAULT_PATH = File.expand_path("~/.ankit")
 
-    attr_writer :repo, :location, :card_paths, :challenge_limit
+    attr_writer :repo, :location, :card_paths, :primary_card_path, :challenge_limit
 
     def repo; @repo ||= File.expand_path("~/.ankit.d"); end
     def location; @location ||= `hostname`.strip; end
     def card_paths; @card_paths ||= [File.join(repo, "cards")]; end
+    def primary_card_path; @primary_card_path ||= card_paths[0]; end
     def challenge_limit; @challenge_limit ||= 50; end
 
     # Computed parameters
@@ -48,6 +49,9 @@ module Ankit
       paths.sort
     end
 
+    def editor_backup
+      File.join(self.repo, "last_edited.txt")
+    end
 
     def self.open(path)
       config = self.new

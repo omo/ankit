@@ -3,6 +3,11 @@ require 'ankit/card'
 require 'ankit/text_reading_command'
 
 module Ankit
+  CARD_TEMPLATE = <<EOF
+O:
+T:
+EOF
+
   class AddCommand < TextReadingCommand
     include CardNaming
     available
@@ -13,7 +18,7 @@ module Ankit
 
     def execute()
       validate_options
-      each_text do |text|
+      each_text(CARD_TEMPLATE.strip) do |text|
         text.split(/\n\n+/).map(&:strip).each do |chunk|
           next if chunk.empty?
           card = Card.parse(chunk)
@@ -27,6 +32,6 @@ module Ankit
       end
     end
 
-    def dest_dir; options[:dir] || runtime.config.card_paths[0]; end
+    def dest_dir; options[:dir] || runtime.config.primary_card_path; end
   end
 end
